@@ -1,0 +1,26 @@
+# Deps & build
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Env & secrets (jangan commit)
+.env
+.env.local
+*.keystore
+*.jks
+
+# Flutter
+flutter/.dart_tool/
+flutter/build/
+flutter/.flutter-plugins
+flutter/.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+*.iml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
