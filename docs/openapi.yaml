@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: SOUQNA API
-  version: 0.8.0-stub
+  version: 0.9.0-stub
   description: >
-    Stub OpenAPI M8 dari docs/api-contract.md. Backend belum ada — mock
+    Stub OpenAPI M9 dari docs/api-contract.md. Backend belum ada — mock
     frontend/src/lib/api-client.ts dan flutter/lib/core/api/api_client.dart
     meniru bentuk request/response ini. Saat backend dimulai, lengkapi
     examples dan validasi per endpoint tanpa mengubah path.
@@ -408,6 +408,93 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         '200': { description: Array log }
+  /me/delete-request:
+    post:
+      tags: [health]
+      summary: Ajukan hapus akun (opsional UX; backend cek order aktif)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '202': { description: Permintaan diterima }
+        '409': { description: Masih ada order aktif }
+  /merchant/products/{productId}/variants:
+    post:
+      tags: [merchant]
+      summary: Tambah variasi produk milik sendiri
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: productId, in: path, required: true, schema: { type: string } }
+      responses:
+        '201': { description: Variasi dibuat }
+  /merchant/variants/{variantId}:
+    parameters:
+      - { name: variantId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [merchant]
+      summary: Ubah harga/stok/label variasi milik sendiri
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Variasi terperbarui }
+    delete:
+      tags: [merchant]
+      summary: Nonaktifkan variasi milik sendiri
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Dinonaktifkan }
+  /uploads/sign:
+    post:
+      tags: [merchant]
+      summary: Tanda tangan upload gambar (validasi MIME/size di backend)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: URL/upload token }
+  /admin/users/{userId}/send-password-recovery:
+    post:
+      tags: [admin]
+      summary: Kirim email recovery (admin tidak melihat password)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: string } }
+      responses:
+        '202': { description: Email dipicu }
+  /admin/users/{userId}:
+    delete:
+      tags: [admin]
+      summary: Hapus akun setelah cek order aktif + anonimisasi
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Dihapus/dianonimkan }
+        '409': { description: Masih ada order aktif }
+  /admin/categories:
+    post:
+      tags: [admin]
+      summary: Buat kategori
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Kategori dibuat }
+  /admin/orders:
+    get:
+      tags: [admin]
+      summary: Lihat semua order untuk dukungan (read-only)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array order }
+  /admin/vouchers/{voucherId}:
+    parameters:
+      - { name: voucherId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [admin]
+      summary: Ubah voucher
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Voucher terperbarui }
+    delete:
+      tags: [admin]
+      summary: Nonaktifkan voucher
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Dinonaktifkan }
 components:
   securitySchemes:
     bearerAuth:

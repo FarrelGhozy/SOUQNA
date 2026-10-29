@@ -1,40 +1,95 @@
-# Strategi Mock Web (Fokus Saat Ini)
+# Strategi Mock Web
 
-Backend ditunda. Web jalan penuh dengan data dummy lokal agar UI/flow bisa didemo.
+Backend ditunda. Web berjalan penuh dengan data dummy lokal agar UI dan alur
+bisa didemokan. Dokumen ini menjelaskan **kondisi aktual**; target redesign ada
+di `docs/design-system.md` dan issue M10.
 
-## Lokasi
+## 1. Lokasi dan tanggung jawab
 
+```text
+frontend/src/
+├── mocks/
+│   ├── categories.mock.ts   # 6 kategori
+│   ├── stores.mock.ts       # 4 toko (2 delivery, 1 pickup-only, 1 inactive)
+│   ├── products.mock.ts     # 20 produk + varian + gambar
+│   └── extras.mock.ts       # users, cart seed, checkout, order, order item,
+│                            # wishlist, chat, review, voucher
+├── lib/
+│   ├── api-client.ts        # seluruh operasi bisnis + hitung server-side
+│   ├── mock-auth.ts         # sesi, login/register dummy, override profil
+│   └── format.ts            # formatIDR, formatDateWIB, delay
+└── types/index.ts           # tipe snake_case
 ```
-frontend/src/mocks/
-├── categories.mock.ts   # 6 kategori
-├── stores.mock.ts       # 4 toko (2 delivery, 1 pickup-only, 1 inactive)
-├── products.mock.ts     # ~20 produk + variants + images (picsum + fallback)
-├── users.mock.ts        # pembeli, merchant, admin (switch role di UI, bukan Supabase real)
-├── cart.mock.ts         # cart awal multi-toko
-├── orders.mock.ts       # checkouts + orders semua status
-├── wishlist.mock.ts
-├── chat.mock.ts         # threads + messages (<7 hari & >7 hari untuk uji purge UI)
-├── reviews.mock.ts
-└── vouchers.mock.ts     # 1 valid, 1 expired, 1 min-subtotal-tinggi
-frontend/src/lib/
-├── api-client.ts        # fungsi async Promise<> per docs/api-contract.md, baca mocks + localStorage
-├── format.ts            # formatIDR, formatDate Asia/Jakarta
-└── mock-auth.ts         # login dummy email apa saja, pilih peran
+
+Tidak ada `users.mock.ts`, `cart.mock.ts`, `orders.mock.ts`, `wishlist.mock.ts`,
+`chat.mock.ts`, `reviews.mock.ts`, atau `vouchers.mock.ts` terpisah. Seed
+tersebut berada di `extras.mock.ts` dan operasi runtime disimpan di
+`localStorage` oleh `api-client.ts`.
+
+## 2. Aturan
+
+- Komponen/page/layout/route **dilarang** import `mocks/` langsung. Semua lewat
+  `src/lib/api-client.ts`.
+- Bentuk field sama dengan `docs/data-model.md` (snake_case).
+- Harga/stok/total/voucher dihitung helper di `api-client`, bukan input komponen.
+- Gambar: `https://picsum.photos/seed/<slug>/600/600` + `onError` fallback
+  `/placeholder.svg`.
+- Simulasi latency: `delay(200–400ms)` agar loading state terlihat.
+- Voucher divalidasi di `api-client`: aktif, masa berlaku, minimum subtotal.
+- Checkout dummy: hitung ulang, kurangi stok, buat 1 checkout + N order,
+  kosongkan cart. Gagal validasi = tidak ada mutasi.
+- Transisi order hanya legal sesuai `docs/roles-flows.md`; stok kembali sekali
+  saat cancel/reject.
+- Chat: pesan lebih dari 7 hari disembunyikan; thread tetap ada.
+
+## 3. localStorage
+
+Semua key berprefix `souqna:`. Ini adalah simulasi database, bukan kontrak
+backend.
+
+| Key | Isi |
+|---|---|
+| `souqna:session` | Snapshot user login |
+| `souqna:extra-users` | User yang dibuat lewat email asing |
+| `souqna:profile-overrides` | Override nama/telepon/lokasi/hasStore |
+| `souqna:cart` | Cart aktif (catatan: masih global, lihat §5) |
+| `souqna:extra-stores`, `souqna:store-overrides` | Toko merchant baru/ubah |
+| `souqna:extra-products`, `souqna:product-overrides` | Produk merchant baru/ubah |
+| `souqna:stock-overrides`, `souqna:stock-returned` | Stok dan idempotensi |
+| `souqna:extra-checkouts`, `souqna:extra-orders`, `souqna:extra-order-items` | Checkout/order baru |
+| `souqna:order-overrides`, `souqna:extra-history` | Status dan histori |
+| `souqna:wishlist`, `souqna:wishlist-deleted` | Wishlist + tombstone |
+| `souqna:extra-conversations`, `souqna:extra-messages` | Chat |
+| `souqna:extra-reviews` | Ulasan baru |
+| `souqna:extra-categories`, `souqna:category-overrides` | Kategori admin |
+| `souqna:extra-vouchers`, `souqna:voucher-overrides` | Voucher admin |
+| `souqna:extra-audit-logs` | Audit log admin |
+
+## 4. Reset data demo
+
+```js
+// DevTools console di http://localhost:5173
+Object.keys(localStorage)
+  .filter((k) => k.startsWith('souqna:'))
+  .forEach((k) => localStorage.removeItem(k));
+location.reload();
 ```
 
-## Aturan
+## 5. Batasan yang diketahui
 
-- Komponen/page dilarang import mock langsung — lewat `api-client` saja agar ganti ke Axios real tinggal 1 file.
-- Bentuk field sama dengan `docs/data-model.md` (snake_case sama seperti API).
-- Harga/stok/total dihitung helper, bukan angka ketikan komponen (simulasi §9).
-- Gambar: `https://picsum.photos/seed/<slug>/600/600` + `onError` fallback `/placeholder.svg`.
-- State cart/wishlist/auth di `localStorage` (`souqna:*`) agar reload tidak hilang.
-- Simulasi keterlambatan: `await delay(300)` di api-client agar loading/empty/error states teruji.
-- Voucher: validasi di `api-client` (aktif, expired, min subtotal) meniru backend.
-- Checkout dummy: buat `checkouts` + N `orders` di memori/localStorage, kurangi stok mock, kosongkan cart.
-- Order transition dummy: hanya izinkan transisi legal (§roles-flows); tolak + toast jika ilegal.
-- Chat: filter pesan `>7 hari` disembunyikan di UI (simulasi purge).
+1. **Cart masih global** (`souqna:cart`), belum per user. Ganti akun masih
+   melihat cart yang sama. Perbaikan: issue #11.
+2. **Order pembeli belum difilter per buyer**; `getOrders()` mengembalikan semua
+   order. Perbaikan: issue #11.
+3. **`getOrder`/`getCheckout` belum memeriksa kepemilikan**. Perbaikan: issue #11.
+4. Beberapa field snapshot backend (`handover_location_snapshot`, snapshot
+   pembeli) belum ada di tipe mock. Akan diselaraskan saat backend dimulai.
+5. Admin delete account/reset password belum ada di UI; lihat issue #21.
 
-## Daftar mock yang harus ada
+## 6. Verifikasi
 
-Lihat `frontend/src/mocks/` — tiap file export array + type dari `src/types/`.
+```bash
+cd frontend && bun run build
+cd frontend && bunx tsc --noEmit
+./scripts/demo-e2e.sh
+```

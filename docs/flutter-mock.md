@@ -1,42 +1,98 @@
-# Strategi Mock Android (Fokus Saat Ini)
+# Strategi Mock Android (Flutter)
 
-Flutter mirror web 1:1 — data, status, dan aturan sama. Tanpa backend, tanpa Supabase real.
+Flutter memantulkan web 1:1 untuk data, status, dan aturan. Tanpa backend dan
+tanpa Supabase real. Dokumen ini menjelaskan **kondisi aktual**, bukan target.
 
-## Lokasi
+## 1. Lokasi dan tanggung jawab
 
-```
+```text
 flutter/lib/
 ├── main.dart
-├── app/app.dart, app/router.dart, app/bottom_nav.dart
+├── app/
+│   ├── app.dart           # MaterialApp
+│   └── bottom_nav.dart    # 5 tab + guard login
 ├── core/
-│   ├── api/api_client.dart   # mirror frontend api-client, baca mocks + delay
-│   ├── auth/mock_auth.dart   # login dummy + switch peran
-│   ├── config/app_config.dart
-│   ├── errors/failures.dart
-│   └── utils/money.dart, utils/date_id.dart
+│   ├── api/api_client.dart # mock-first; Dio belum dipakai HTTP
+│   ├── auth/mock_auth.dart # sesi + SharedPreferences
+│   └── utils/money.dart, date_id.dart
+├── features/
+│   ├── auth/screens/
+│   ├── catalog/screens/   # home, search, category, product, store
+│   ├── cart/screens/      # cart, checkout, success
+│   ├── orders/screens/    # buyer + merchant order
+│   ├── merchant/screens/  # dashboard, produk, form, toko
+│   ├── wishlist/screens/
+│   └── chat/screens/
 ├── mocks/
-│   ├── categories_mock.dart  # 6 kategori (sama dengan web)
-│   ├── stores_mock.dart      # 4 toko
-│   ├── products_mock.dart    # 20 produk + varian
+│   ├── categories_mock.dart
+│   ├── stores_mock.dart
+│   ├── products_mock.dart
 │   ├── users_mock.dart
-│   └── vouchers_mock.dart    # HEMAT5K valid + KADALUARSA expired (aturan = web)
-│   # cart/orders/wishlist/chat/review: in-memory di core/api/api_client.dart
-│   # (seed sama dengan frontend/src/mocks/extras.mock.ts)
-├── features/<fitur>/data, providers, screens, widgets
-└── shared/widgets, theme
+│   └── vouchers_mock.dart
+└── shared/widgets/product_card.dart
 ```
 
-## Aturan parity
+Tidak ada `app/router.dart`, `core/config/app_config.dart`,
+`core/errors/failures.dart`, atau `shared/theme` saat ini. Navigasi memakai
+`BottomNav` + `Navigator.push`; theme target M11.
 
-- ID/slug/nama/harga/stok/status sama persis dengan `frontend/src/mocks/`. Ubah di satu sisi → ubah di sisi lain.
-- Bottom nav 5 tab: Beranda, Kategori, Keranjang, Pesanan, Akun (lihat `docs/pages-ux.md`).
-  Tab Kategori = `category_list_screen.dart` (parity `/categories`) → ketuk masuk pencarian terfilter.
-- Merchant screens hanya jika `mockUser.hasStore`; admin screens disembunyikan (prioritas web).
-- Dio dipasang dari awal tapi interceptor mengarah ke mock (flag `USE_MOCK=true`); saat backend siap tinggal flip flag + base URL.
-- Format IDR: `NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)`. Tanggal Asia/Jakarta manual (`+7`).
-- Gambar: `Image.network` + `errorBuilder` placeholder icon.
-- State: `ChangeNotifier`/`Riverpod`-ringan cukup (tanpa arsitektur berat dulu); persist minimal via `shared_preferences` bila sempat, else in-memory.
+## 2. Aturan parity
 
-## Flutter SDK belum terinstal di mesin ini
+- ID/slug/nama/harga/stok/status sama persis dengan `frontend/src/mocks/`.
+  Ubah di satu sisi → ubah di sisi lain.
+- Bottom nav 5 tab: Beranda, Kategori, Keranjang, Pesanan, Akun.
+  Tab Kategori = `CategoryListScreen` → search terfilter.
+- Merchant via menu Akun bila `hasStore`; admin disembunyikan (prioritas web).
+- Data lewat `core/api/api_client.dart` saja. Dilarang import mock langsung dari
+  widget/screen.
+- Format IDR: `NumberFormat.currency(locale: 'id_ID', symbol: 'Rp',
+  decimalDigits: 0)`. Tanggal Asia/Jakarta mengikuti `date_id.dart`.
+- Gambar: `Image.network` + `errorBuilder` fallback icon.
+- `ApiClient` saat ini mengembalikan `Future` dari data in-memory/SharedPreferences
+  dengan delay simulasi. `Dio` baru dideklarasikan, belum dipakai untuk request.
 
-Struktur `flutter/` dibuat manual (tanpa `flutter create`) agar tetap bisa dikerjakan: `pubspec.yaml` + `lib/` lengkap. Jalankan `flutter pub get && flutter run` setelah SDK terinstal.
+## 3. Persistensi
+
+`MockAuth` memakai `SharedPreferences` untuk menyimpan ID sesi dan sebagian
+override. Kondisi aktual:
+
+| Data | Persist? | Catatan |
+|---|---|---|
+| ID sesi preset | Ya | Direkonstruksi dari `usersMock` |
+| User baru (email asing) | Tidak penuh | `_extras` in-memory; hanya email yang disimpan |
+| Override nama/telepon/lokasi | Terbatas | Disimpan per user, pemulihan belum lengkap |
+| `hasStore`/`store_id` setelah buat toko | Tidak | Hilang setelah restart |
+| Cart/order/wishlist/chat | In-memory | Belum selaras dengan persistensi web |
+
+Perbaikan persistensi dan scoping ada di issue #11 dan #16. Jangan mengklaim
+Flutter “sudah persisten penuh” sampai diperbaiki dan diuji.
+
+## 4. Batasan SDK
+
+Flutter SDK belum terpasang di mesin dev ini. Struktur `flutter/` dibuat manual
+(tanpa `flutter create`). Jalankan setelah SDK tersedia:
+
+```bash
+flutter pub get
+flutter run
+flutter analyze
+flutter test
+```
+
+Catat hasil nyata di issue/PR. Jangan menulis “lolos” tanpa output.
+
+## 5. Tema target M11
+
+- `lib/shared/theme/app_theme.dart` dengan `ColorScheme` eksplisit.
+- Palette: navy `#0B2A4A`, blue `#1E6091`, blue-hover `#164E77`, gold `#D4AF37`,
+  bg `#F1F5F9`, text `#0F172A`.
+- Jangan memakai `colorSchemeSeed: Colors.green`.
+- Detail mapping: `docs/design-system.md`.
+
+## 6. Verifikasi
+
+```bash
+./scripts/demo-e2e.sh
+# setelah SDK tersedia:
+cd flutter && flutter analyze && flutter test
+```

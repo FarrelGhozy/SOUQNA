@@ -1,67 +1,82 @@
-# TODO — SOUQNA (Fokus: Frontend + Flutter Dummy, Backend Nanti)
+# TODO — SOUQNA
 
-Acuan: `SOUQNA_MVP.md` + `docs/`. Backend/`db/` sengaja stub.
-Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja).
+> Status: baseline demo mock M0–M8 selesai.
+> Fokus berikutnya: M9 dokumentasi → M10 correctness + web UI → M11 Flutter/UX →
+> M12 quality & release.
+>
+> Aturan: centang hanya setelah ada bukti (build/test/demo/screenshot) dan
+> tautkan issue/PR. Jangan menandai selesai hanya karena file sudah dibuat.
+> Backend/DB/Auth real tetap **deferred** sampai M9–M12 stabil.
 
-## M0 — Fondasi klien + docs [prioritas 1]
+## Baseline M0–M8 — demo mock (arsip)
 
-- [x] Pecah MVP jadi `docs/*.md` + index
-- [x] Tulis `TODO.md` + `AGENTS.md`
-- [x] Scaffold `frontend/` (Vite+React+Router+Bun, Axios terpasang, api-client mock-first)
-- [x] Struktur `flutter/` manual (pubspec + lib/app+core+features+shared+mocks)
-- [x] Data dummy parity web↔Android (6 kategori, 4 toko, ~20 produk+varian, cart, orders, wishlist, chat, reviews, vouchers, 3 users)
-- [x] README cara jalan `bun install && bun run dev` (web, terverifikasi HTTP 200) dan `flutter pub get && flutter run` (android)
+- [x] Struktur repo, frontend Vite+React+Router, Flutter manual, mock parity awal.
+- [x] M1 katalog publik, search/filter/sort/pagination, detail produk/toko.
+- [x] M2 auth dummy, profil, guard pembeli/merchant/admin.
+- [x] M3 cart multi-toko, checkout COD, voucher, 1 checkout → N order.
+- [x] M4 pesanan + transisi COD, histori status.
+- [x] M5 merchant: 1 toko, CRUD produk/varian/stok.
+- [x] M6 wishlist, review, chat + simulasi purge 7 hari.
+- [x] M7 admin web: dashboard, users, kategori, produk, order, voucher, audit.
+- [x] M8 parity web↔Flutter + `scripts/demo-e2e.sh` + ERD/OpenAPI stub.
 
-## M1 — Katalog publik (tanpa login) · issue #1
+Catatan: baseline di atas adalah **demo mock**, bukan backend/Auth/DB produksi.
+Lihat `docs/implementation-audit.md` untuk gap yang masih ada.
 
-- [x] Beranda: kategori, produk aktif/terbaru, tersedia
-- [x] Search `q` + filter kategori/harga + sort + pagination dummy
-- [x] Detail produk: varian, harga/stok per varian, label habis, gambar fallback
-- [x] Detail toko + produk toko; toko inactive disembunyikan dari checkout
-- [x] Loading/empty/error states + format IDR + tanggal WIB
+## M9 — Dokumentasi & design system
 
-## M2 — Auth dummy + profil · issue #2
+- [x] Audit dokumen vs code + matriks status kapabilitas — issue #9, `docs/implementation-audit.md`.
+- [x] Design system + token Biru UNIDA Gontor — issue #10, `docs/design-system.md`.
+- [x] Sinkronkan `README.md`, `AGENTS.md`, `frontend/AGENTS.md`, `flutter/AGENTS.md`.
+- [x] Sinkronkan `docs/frontend-mock.md`, `docs/flutter-mock.md`, `docs/repo-structure.md`.
+- [x] Sinkronkan `docs/data-model.md`, `docs/ERD.md`, `docs/parity-audit.md`.
+- [x] Sinkronkan `docs/pages-ux.md`, `docs/acceptance-roadmap.md`, `docs/testing-deploy.md`.
+- [x] Sinkronkan `docs/api-contract.md`, `docs/openapi.yaml`, `docs/demo-e2e.md`.
+- [x] Reset TODO + buat milestone/label/issue GitHub #9–#21.
+- [x] Verifikasi akhir M9: build/tsc/demo lolos dan `git diff` hanya dokumentasi.
+  Bukti 2026-10-30: `bun run build`, `bunx tsc --noEmit`, `./scripts/demo-e2e.sh`
+  lolos; tidak ada perubahan di `frontend/src`, `flutter/lib`, `backend/src`,
+  atau `db/schema`.
 
-- [x] Login/register dummy (email apa saja) + switch peran pembeli/merchant/admin
-- [x] Guard route: `/cart /checkout /orders /wishlist /chat /me` minta login
-- [x] Profil edit nama/telepon/lokasi (localStorage), logout
-- [x] Guard merchant (`hasStore`) dan admin (`isAdmin`); tanpa role dari input user
+## M10 — Correctness & web UI
 
-## M3 — Cart + checkout dummy · issue #3
+- [ ] Scoping order/cart/ownership mock web+Flutter — issue #11.
+- [ ] Fondasi UI web: token, layout, komponen reusable — issue #12.
+- [ ] Redesign halaman publik & auth web — issue #13.
+- [ ] Redesign halaman akun & transaksi web — issue #14.
+- [ ] Redesign merchant & admin web — issue #15.
+- [ ] Regression check: alur demo M1–M7 tetap lolos setelah redesign.
 
-- [x] Cart multi-toko, ubah qty, hapus; persist localStorage
-- [x] Checkout: pilih pickup/delivery per toko, input lokasi, kode voucher (valid/expired/min-subtotal)
-- [x] Simulasi `POST /checkout`: hitung server-side di helper, 1 checkout → N orders, kurangi stok, kosongkan cart, gagal atomik jika stok kurang
-- [x] Ringkasan multi-merchant + tolak 1 order tidak batalkan lain (UI)
+## M11 — Flutter parity & UX
 
-## M4 — Pesanan + COD dummy · issue #4
+- [ ] Tema & shared components Flutter — issue #16.
+- [ ] Perbaiki persistensi mock auth Flutter — issue #16.
+- [ ] UX states, label status, toast/404/error boundary — issue #17.
+- [ ] Samakan copy dan perilaku web↔Flutter untuk alur inti.
+- [ ] Catat hasil `flutter analyze`/`flutter test` atau blocker SDK.
 
-- [x] List/detail order pembeli; merchant list/detail order tokonya
-- [x] Transisi legal saja: cancel (pending), accept/reject, ready/out-for-delivery, confirm-received, mark-paid, completed = terima + lunas
-- [x] Toast jelas saat transisi ilegal; histori status tampil
+## M12 — Quality & release
 
-## M5 — Merchant dummy · issue #5
+- [ ] Testing, lint, typecheck, CI — issue #19.
+- [ ] Accessibility & responsive QA — issue #18.
+- [ ] Performance budget + deployment + UAT + portfolio — issue #20.
+- [ ] Demo ulang dari state reset, screenshot, release notes `v1.0.0-demo`.
+- [ ] Update README/TODO dengan bukti akhir.
 
-- [x] Form Jadi Merchant → buat 1 toko, tolak toko kedua
-- [x] Dashboard ringkas + profil toko (delivery fee)
-- [x] CRUD produk + varian + stok + gambar URL; milik sendiri saja
+## Backlog (setelah M12)
 
-## M6 — Wishlist, review, chat dummy · issue #6
+- [ ] Mock UI reset password & hapus akun admin — issue #21.
+- [ ] Backend Express + Drizzle + Supabase Auth/DB/Storage.
+- [ ] Purge chat job real, rate limit, CORS, audit server.
+- [ ] Hapus akun + anonimisasi real.
+- [ ] Google OAuth dan recovery email real.
 
-- [x] Wishlist per user (unique), minta login
-- [x] Review hanya order-item completed milik sendiri, 1 per item, rating 1–5
-- [x] Chat teks per toko, pesan >7 hari disembunyikan (simulasi purge), thread tetap ada
+## Definition of Done demo akhir
 
-## M7 — Admin UI (web prioritas) · issue #7
-
-- [x] Dashboard statistik sederhana, users, kategori CRUD, moderasi hide/publish, orders lihat, voucher CRUD, audit log dummy
-
-## M8 — Parity + demo · issue #8
-
-- [x] Tiap layar M1–M6 ada di Flutter dengan data sama (lihat `docs/parity-audit.md`; M8 tambah `category_list_screen`, `vouchers_mock` + `getVouchers/validateVoucher`, fix `+ Keranjang` asli, hapus `souqna_mock.dart` mati)
-- [x] Skrip demo E2E (search → login → toko → produk → cart 2 toko → checkout → proses → COD → review/wishlist/chat → voucher) — `docs/demo-e2e.md` + `./scripts/demo-e2e.sh` LOLOS (web build lolos; Android manual setelah SDK ada)
-- [x] `docs/ERD.md` final + OpenAPI stub (`docs/openapi.yaml`) dari `docs/api-contract.md` saat backend dimulai
-
-## NANTI (jangan kerjakan sekarang)
-
-Backend Express+Drizzle, migrasi/seed, Supabase Auth real, Storage real, purge job real, hapus akun+anonimisasi real, rate-limit/CORS/audit real.
+- Web dan Android memakai data/perilaku parity.
+- Semua alur inti bisa didemokan tanpa error.
+- Tema UNIDA konsisten; tidak ada hex liar di halaman.
+- Loading/empty/error/success state tersedia di layar utama.
+- Build web, typecheck, test, dan Flutter check tercatat.
+- Tidak ada secret di klien/repo.
+- Dokumentasi tidak mengklaim backend/Auth/DB yang belum ada.

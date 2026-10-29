@@ -1,8 +1,12 @@
 # ERD — SOUQNA (Final M8)
 
-Sumber: `SOUQNA_MVP.md` §8. Skema Drizzle (`db/schema/`) menyusul di fase backend;
-mock `frontend/src/mocks/*` ↔ `flutter/lib/mocks/*` sudah memakai nama tabel/kolom yang sama.
-Field mock memakai snake_case sama seperti kontrak API agar ganti ke backend nyata tinggal ganti transport.
+Status: **rancangan final**. Skema Drizzle (`db/schema/`) belum dibuat dan tetap
+deferred. Mock `frontend/src/mocks/*` ↔ `flutter/lib/mocks/*` memakai nama
+field snake_case yang sama seperti kontrak API.
+
+Catatan: tipe mock belum memuat semua field snapshot di bawah (lihat
+`docs/implementation-audit.md`). ERD ini adalah target backend, bukan klaim
+bahwa seluruh kolom sudah ada di mock.
 
 ```mermaid
 erDiagram
@@ -64,8 +68,20 @@ erDiagram
 - Status order: `pending_merchant_confirmation → accepted → ready_for_pickup | out_for_delivery → received_by_buyer → completed` + `rejected`/`cancelled`; `completed` = terima + lunas.
 - Parity mock: `frontend/src/mocks/*` ↔ `flutter/lib/mocks/*` — 6 kategori, 4 toko, 20 produk + varian, ID/slug/harga/stok/status sama (cek `scripts/demo-e2e.sh`).
 
-## Masuk backend (setelah M8)
+## Masuk backend (setelah M9–M12 stabil)
 
-1. Buat `db/schema/*.ts` dari tabel di atas, `drizzle-kit generate`, lalu `db/seed/categories.seed.ts` + `demo.seed.ts` dari mock yang sama.
-2. Kontrak endpoint: `docs/openapi.yaml` (stub M8) → lengkapi contoh request/response saat backend ditulis.
-3. Jangan mulai backend sebelum checklist M1–M7 hijau (lihat `TODO.md` + `docs/acceptance-roadmap.md`).
+1. Buat `db/schema/*.ts` dari tabel di atas, `drizzle-kit generate`, lalu
+   `db/seed/categories.seed.ts` + `demo.seed.ts` dari mock yang sama.
+2. Kontrak endpoint: `docs/openapi.yaml` (stub M8) → lengkapi contoh
+   request/response saat backend ditulis.
+3. Jangan mulai backend sebelum TODO M9–M12 selesai dan issue correctness mock
+   (#11) ditutup. Lihat `docs/acceptance-roadmap.md`.
+
+## Gap mock yang diketahui
+
+- Cart web belum per user; order buyer belum difilter; detail order/checkout
+  belum memeriksa kepemilikan (issue #11).
+- Field `buyer_*_snapshot` dan `handover_location_snapshot` belum ada di tipe
+  mock.
+- Persistensi Flutter belum lengkap (issue #16).
+- Admin delete account/reset password belum ada di UI (issue #21).

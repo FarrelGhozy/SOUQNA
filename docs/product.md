@@ -4,19 +4,24 @@
 
 ## Ringkasan
 
-Marketplace kampus + UMKM sekitar. Pola Shopee tapi scope kecil untuk tugas kuliah Web & Android.
+Marketplace kampus + UMKM sekitar. Pola marketplace modern dengan scope kecil
+untuk proyek akademik Web & Android, dikerjakan dengan standar produk nyata:
+alur jelas, data konsisten, UI rapi, dan kualitas terukur.
 
 - Web: React + Vite + React Router (runtime Bun), HTTP: Axios
 - Android: Flutter, HTTP: Dio
 - Backend (ditunda): Bun + Express + Drizzle ORM + Supabase PostgreSQL
 - Auth: Supabase Auth (email/password + Google)
 - File: Supabase Storage. Scheduler: cleanup chat 7 hari.
+- Tema: Biru UNIDA Gontor (`docs/design-system.md`).
 
-Tanpa payment gateway. COD: bayar tunai saat serah terima, merchant menandai lunas manual.
+Tanpa payment gateway. COD: bayar tunai saat serah terima, merchant menandai
+lunas manual.
 
-Browsing katalog tanpa login. Login wajib untuk: checkout, wishlist, chat, ulasan, jadi merchant.
+Browsing katalog tanpa login. Login wajib untuk: checkout, wishlist, chat,
+ulasan, jadi merchant.
 
-## Tujuan (7)
+## Tujuan
 
 1. Katalog + kategori + pencarian + detail + variasi + stok.
 2. Checkout multi-merchant dalam 1 proses.
@@ -28,15 +33,18 @@ Browsing katalog tanpa login. Login wajib untuk: checkout, wishlist, chat, ulasa
 
 ## Tidak termasuk MVP
 
-Payment gateway/QRIS/VA, kurir eksternal/GPS, ekspedisi nasional, chat gambar/video/voice, multi-toko per akun, variasi lintas-kombinasi kompleks, AI/rekomendasi/iklan/flash-sale/loyalty, iOS wajib, moderasi AI.
+Payment gateway/QRIS/VA, kurir eksternal/GPS, ekspedisi nasional, chat
+gambar/video/voice, multi-toko per akun, variasi lintas-kombinasi kompleks,
+AI/rekomendasi/iklan/flash-sale/loyalty, iOS wajib, moderasi AI, dark mode.
 
 ## Prinsip
 
-- Sederhana, bisa didemo.
+- Sederhana, bisa didemo, tetapi tidak asal jadi.
 - Backend sumber kebenaran harga/stok/auth/voucher/status.
 - Validasi server wajib; validasi UI saja tidak cukup.
 - Web/Android tidak akses tabel bisnis langsung — lewat API.
-- Jangan perluas scope sebelum alur utama stabil.
+- Jangan perluas scope sebelum M9–M12 stabil.
+- Status kapabilitas harus jujur: mock vs target backend.
 
 ## Keputusan terkunci (ringkas)
 
@@ -49,7 +57,7 @@ Payment gateway/QRIS/VA, kurir eksternal/GPS, ekspedisi nasional, chat gambar/vi
 | Peran | 1 akun = pembeli + merchant |
 | Aktivasi merchant | Otomatis setelah form toko valid; 1 akun 1 toko |
 | Variasi | Harga+stok per variasi |
-| Keranjang | Multi-merchant boleh |
+| Keranjang | Multi-merchant, per user |
 | Checkout | 1 grup `checkouts` → N `orders` (1 per toko) |
 | Pembayaran | COD saja; lunas ditandai merchant setelah terima tunai |
 | Selesai | `received_by_buyer` + `paid` dua-duanya |
@@ -61,3 +69,4 @@ Payment gateway/QRIS/VA, kurir eksternal/GPS, ekspedisi nasional, chat gambar/vi
 | Reset password | Admin picu email recovery; admin tidak lihat password |
 | Hapus user | Cek order aktif dulu; riwayat selesai dipertahankan anonim; email boleh daftar lagi; toko lama tidak pulih |
 | Admin | Users, kategori, moderasi produk, orders, voucher; bukan pemroses pembayaran |
+| Tema | Biru UNIDA Gontor; gold hanya aksen |
