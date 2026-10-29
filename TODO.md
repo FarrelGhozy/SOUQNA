@@ -10,7 +10,7 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 - [x] Scaffold `frontend/` (Vite+React+Router+Bun, Axios terpasang, api-client mock-first)
 - [x] Struktur `flutter/` manual (pubspec + lib/app+core+features+shared+mocks)
 - [x] Data dummy parity web↔Android (6 kategori, 4 toko, ~20 produk+varian, cart, orders, wishlist, chat, reviews, vouchers, 3 users)
-- [ ] README cara jalan `bun install && bun run dev` (web) dan `flutter pub get && flutter run` (android)
+- [x] README cara jalan `bun install && bun run dev` (web, terverifikasi HTTP 200) dan `flutter pub get && flutter run` (android)
 
 ## M1 — Katalog publik (tanpa login)
 
