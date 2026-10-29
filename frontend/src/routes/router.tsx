@@ -3,6 +3,8 @@ import { PublicLayout, AuthLayout, AccountLayout, MerchantLayout, AdminLayout } 
 import { HomePage } from '../pages/HomePage.js';
 import { SearchPage } from '../pages/SearchPage.js';
 import { ProductDetailPage } from '../pages/ProductDetailPage.js';
+import { StoreDetailPage } from '../pages/StoreDetailPage.js';
+import { CategoryListPage } from '../pages/CategoryListPage.js';
 import { LoginPage } from '../pages/LoginPage.js';
 import { CartPage } from '../pages/CartPage.js';
 import { CheckoutPage } from '../pages/CheckoutPage.js';
@@ -17,7 +19,9 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/search', element: <SearchPage /> },
+      { path: '/categories', element: <CategoryListPage /> },
       { path: '/products/:productId', element: <ProductDetailPage /> },
+      { path: '/stores/:storeId', element: <StoreDetailPage /> },
     ],
   },
   {

@@ -14,11 +14,11 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M1 — Katalog publik (tanpa login) · issue #1
 
-- [ ] Beranda: kategori, produk aktif/terbaru, tersedia
-- [ ] Search `q` + filter kategori/harga + sort + pagination dummy
-- [ ] Detail produk: varian, harga/stok per varian, label habis, gambar fallback
-- [ ] Detail toko + produk toko; toko inactive disembunyikan dari checkout
-- [ ] Loading/empty/error states + format IDR + tanggal WIB
+- [x] Beranda: kategori, produk aktif/terbaru, tersedia
+- [x] Search `q` + filter kategori/harga + sort + pagination dummy
+- [x] Detail produk: varian, harga/stok per varian, label habis, gambar fallback
+- [x] Detail toko + produk toko; toko inactive disembunyikan dari checkout
+- [x] Loading/empty/error states + format IDR + tanggal WIB
 
 ## M2 — Auth dummy + profil · issue #2
 

@@ -12,7 +12,7 @@ export interface ProductVariant {
 export interface Product {
   id: string; store_id: string; category_id: string; name: string; slug: string;
   description: string; status: 'draft' | 'published' | 'hidden' | 'suspended';
-  image_url: string; variants: ProductVariant[];
+  image_url: string; variants: ProductVariant[]; created_at: string;
 }
 export interface CartItem { id: string; user_id: string; product_variant_id: string; quantity: number }
 export interface Checkout { id: string; buyer_id: string; checkout_code: string; subtotal: number; discount_total: number; grand_total: number; created_at: string }

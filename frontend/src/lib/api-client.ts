@@ -4,20 +4,61 @@ import { categories } from '../mocks/categories.mock.js';
 import { stores } from '../mocks/stores.mock.js';
 import { products } from '../mocks/products.mock.js';
 import { checkouts, conversations, messages, orders, orderItems, reviews, users, vouchers, wishlist } from '../mocks/extras.mock.js';
+import type { Product } from '../types/index.js';
 import { delay } from './format.js';
 import { currentSession } from './mock-auth.js';
 
+export type ProductSort = 'terbaru' | 'termurah' | 'termahal' | 'nama';
+export interface ProductQuery {
+  q?: string; categoryId?: string; storeId?: string;
+  minPrice?: number; maxPrice?: number; sort?: ProductSort;
+  page?: number; limit?: number;
+}
+export interface Paged<T> { data: T[]; total: number; page: number; limit: number }
+
+// Helper simulasi server: harga dihitung dari varian, bukan input komponen.
+export const productMinPrice = (p: Product) => Math.min(...p.variants.map((v) => v.price));
+export const isProductOutOfStock = (p: Product) => p.variants.every((v) => v.stock_quantity === 0);
+const activeStoreIds = () => new Set(stores.filter((s) => s.status === 'active').map((s) => s.id));
+
 export const api = {
   async getCategories() { await delay(); return categories.filter((c) => c.is_active); },
-  async getProducts(params: { q?: string; categoryId?: string } = {}) {
+  async getStores() { await delay(); return stores.filter((s) => s.status === 'active'); },
+
+  async getProducts(params: ProductQuery = {}): Promise<Paged<Product>> {
     await delay();
-    return products.filter((p) => {
+    const active = activeStoreIds();
+    let list = products.filter((p) => {
       if (p.status !== 'published') return false;
+      if (!active.has(p.store_id)) return false; // toko nonaktif tidak tampil di katalog
       if (params.categoryId && p.category_id !== params.categoryId) return false;
-      if (params.q && !p.name.toLowerCase().includes(params.q.toLowerCase())) return false;
+      if (params.storeId && p.store_id !== params.storeId) return false;
+      if (params.q) {
+        const q = params.q.toLowerCase();
+        const hay = `${p.name} ${p.description} ${p.slug}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const min = productMinPrice(p);
+      if (params.minPrice != null && min < params.minPrice) return false;
+      if (params.maxPrice != null && min > params.maxPrice) return false;
       return true;
     });
+
+    const sort = params.sort ?? 'terbaru';
+    list = [...list].sort((a, b) => {
+      if (sort === 'termurah') return productMinPrice(a) - productMinPrice(b);
+      if (sort === 'termahal') return productMinPrice(b) - productMinPrice(a);
+      if (sort === 'nama') return a.name.localeCompare(b.name, 'id');
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    const limit = Math.min(Math.max(params.limit ?? 12, 1), 50);
+    const page = Math.max(params.page ?? 1, 1);
+    const total = list.length;
+    const data = list.slice((page - 1) * limit, page * limit);
+    return { data, total, page, limit };
   },
+
   async getProduct(id: string) { await delay(); return products.find((p) => p.id === id) ?? null; },
   async getStore(id: string) { await delay(); return stores.find((s) => s.id === id) ?? null; },
   async getStoreProducts(storeId: string) { await delay(); return products.filter((p) => p.store_id === storeId && p.status === 'published'); },
