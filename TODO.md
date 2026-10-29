@@ -42,9 +42,9 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M5 — Merchant dummy · issue #5
 
-- [ ] Form Jadi Merchant → buat 1 toko, tolak toko kedua
-- [ ] Dashboard ringkas + profil toko (delivery fee)
-- [ ] CRUD produk + varian + stok + gambar URL; milik sendiri saja
+- [x] Form Jadi Merchant → buat 1 toko, tolak toko kedua
+- [x] Dashboard ringkas + profil toko (delivery fee)
+- [x] CRUD produk + varian + stok + gambar URL; milik sendiri saja
 
 ## M6 — Wishlist, review, chat dummy · issue #6
 

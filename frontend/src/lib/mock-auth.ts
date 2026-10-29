@@ -11,7 +11,7 @@ const KEY = 'souqna:session';
 const EXTRA_KEY = 'souqna:extra-users';
 const OVERRIDES_KEY = 'souqna:profile-overrides';
 
-type Override = Partial<Pick<MockUser, 'full_name' | 'phone' | 'default_location'>>;
+type Override = Partial<Pick<MockUser, 'full_name' | 'phone' | 'default_location' | 'hasStore' | 'store_id'>>;
 
 function read<T>(key: string): T | null {
   try {
@@ -111,3 +111,27 @@ export function updateProfile(patch: Override): MockUser {
 }
 
 export function logout() { localStorage.removeItem(KEY); }
+
+/** Tandai sesi punya toko (dipanggil setelah createMyStore sukses). */
+export function attachStore(storeId: string): MockUser {
+  const s = read<MockUser>(KEY);
+  if (!s) throw new Error('Belum login.');
+  const ov = overrides();
+  ov[s.id] = { ...ov[s.id], hasStore: true, store_id: storeId };
+  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
+  // Sinkronkan juga bila user ada di extra-users (akun buyer baru).
+  try {
+    const raw = localStorage.getItem(EXTRA_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw) as MockUser[];
+      const i = arr.findIndex((u) => u.id === s.id);
+      if (i >= 0) {
+        arr[i] = { ...arr[i], hasStore: true, store_id: storeId };
+        localStorage.setItem(EXTRA_KEY, JSON.stringify(arr));
+      }
+    }
+  } catch { /* abaikan */ }
+  const u = applyOverride(s);
+  saveSession(u);
+  return u;
+}

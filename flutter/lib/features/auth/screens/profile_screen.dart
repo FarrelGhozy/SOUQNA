@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/auth/mock_auth.dart';
+import '../../merchant/screens/become_merchant_screen.dart';
+import '../../merchant/screens/merchant_dashboard_screen.dart';
+import '../../merchant/screens/product_list_screen.dart';
+import '../../merchant/screens/store_profile_screen.dart';
 import '../../orders/screens/merchant_orders_screen.dart';
 
 // Profil: edit nama/telepon/lokasi, logout. Data sesi via MockAuth.
@@ -59,14 +63,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const Divider(height: 32),
             OutlinedButton(onPressed: () => _auth.logout(), child: const Text('Keluar')),
-            if (s.hasStore)
+            if (s.hasStore) ...[
+              const SizedBox(height: 8),
+              const Text('Menu merchant',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               ElevatedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const MerchantDashboardScreen())),
+                child: const Text('Dashboard merchant'),
+              ),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => ProductListScreen(
+                        ownerId: s.id, storeId: s.storeId ?? ''))),
+                child: const Text('Kelola produk'),
+              ),
+              OutlinedButton(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => MerchantOrdersScreen(ownerId: s.id))),
                 child: const Text('Order toko saya'),
               ),
-            if (!s.hasStore) const Text('Belum punya toko. Daftar via menu merchant (M5).',
-                style: TextStyle(color: Colors.grey)),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => StoreProfileScreen(ownerId: s.id))),
+                child: const Text('Profil toko'),
+              ),
+            ],
+            if (!s.hasStore)
+              ElevatedButton(
+                onPressed: () => Navigator.of(context)
+                    .push(MaterialPageRoute(
+                        builder: (_) => const BecomeMerchantScreen()))
+                    .then((ok) {
+                  if (ok == true && mounted) setState(() => _init = false);
+                }),
+                child: const Text('Jadi merchant'),
+              ),
           ],
         );
       },

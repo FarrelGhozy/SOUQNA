@@ -32,6 +32,6 @@ function Nav() {
 
 export function PublicLayout() { return (<><Nav /><main style={{ padding: 16, maxWidth: 960, margin: '0 auto' }}><Outlet /></main></>); }
 export function AccountLayout() { return (<><Nav /><main style={{ padding: 16, maxWidth: 960, margin: '0 auto' }}><Outlet /></main></>); }
-export function MerchantLayout() { return (<><Nav /><main style={{ padding: 16, maxWidth: 960, margin: '0 auto' }}><h2>Panel Merchant</h2><Outlet /></main></>); }
+export function MerchantLayout() { return (<><Nav /><main style={{ padding: 16, maxWidth: 960, margin: '0 auto' }}><h2>Panel Merchant</h2><nav style={{ display: 'flex', gap: 12, marginBottom: 12 }}><Link to="/merchant">Dashboard</Link><Link to="/merchant/products">Produk</Link><Link to="/merchant/orders">Order</Link><Link to="/merchant/store">Toko</Link></nav><Outlet /></main></>); }
 export function AdminLayout() { return (<><Nav /><main style={{ padding: 16, maxWidth: 960, margin: '0 auto' }}><h2>Panel Admin</h2><Outlet /></main></>); }
 export function AuthLayout() { return (<main style={{ padding: 32, maxWidth: 480, margin: '0 auto' }}><Outlet /></main>); }

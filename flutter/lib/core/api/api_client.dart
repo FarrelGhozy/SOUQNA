@@ -126,6 +126,287 @@ class OrderMock {
 class ApiClient {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://localhost:3000/api/v1'));
 
+  // --- Merchant dummy: toko/produk milik sendiri (in-memory + override) ---
+  static final List<StoreMock> _extraStores = [];
+  static final Map<String, StoreMock> _storeOv = {};
+  static final List<ProductMock> _extraProducts = [];
+  static final Map<String, Map<String, String?>> _prodOv = {};
+  static final Map<String, VariantMock> _varOv = {};
+  static final Map<String, List<VariantMock>> _addedVars = {};
+  static final Set<String> _deletedProd = {};
+  static int _mseq = 0;
+
+  StoreMock _effStore(StoreMock s) => _storeOv[s.id] ?? s;
+  List<StoreMock> _allStores() =>
+      [...storesMock, ..._extraStores].map(_effStore).toList();
+
+  ProductMock _eff(ProductMock p) {
+    final ov = _prodOv[p.id];
+    final vars = <VariantMock>[
+      for (final v in p.variants)
+        VariantMock(_varOv[v.id]?.id ?? v.id, _varOv[v.id]?.label ?? v.label,
+            _varOv[v.id]?.price ?? v.price, _stockOf(v.id, _varOv[v.id]?.stock ?? v.stock)),
+      ...(_addedVars[p.id] ?? const []).map((v) =>
+          VariantMock(v.id, v.label, v.price, _stockOf(v.id, v.stock))),
+    ];
+    final deleted = _deletedProd.contains(p.id);
+    return ProductMock(
+      id: p.id, storeId: p.storeId, categoryId: ov?['categoryId'] ?? p.categoryId,
+      name: ov?['name'] ?? p.name, description: ov?['description'] ?? p.description,
+      status: deleted ? 'hidden' : (ov?['status'] ?? p.status),
+      imageUrl: ov?['imageUrl'] ?? p.imageUrl, createdAt: p.createdAt, variants: vars,
+    );
+  }
+
+  List<ProductMock> _allProducts() =>
+      [...productsMock, ..._extraProducts].map(_eff).toList();
+
+  ProductMock? _raw(String productId) {
+    for (final p in [...productsMock, ..._extraProducts]) {
+      if (p.id == productId) return p;
+    }
+    return null;
+  }
+
+  /// Cari id produk pemilik varian (termasuk varian tambahan/override).
+  String? _ownerProductOf(String variantId) {
+    for (final p in [...productsMock, ..._extraProducts]) {
+      if (p.variants.any((v) => v.id == variantId)) return p.id;
+      if ((_addedVars[p.id] ?? const []).any((v) => v.id == variantId)) {
+        return p.id;
+      }
+    }
+    if (_varOv.containsKey(variantId)) {
+      for (final p in _allProducts()) {
+        if (p.variants.any((v) => v.id == variantId)) return p.id;
+      }
+    }
+    return null;
+  }
+
+  StoreMock? _myStore(String ownerId) {
+    try {
+      return _allStores().firstWhere((s) => s.ownerId == ownerId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<StoreMock?> getMyStore(String ownerId) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    return _myStore(ownerId);
+  }
+
+  Future<StoreMock> createMyStore({
+    required String ownerId,
+    required String name,
+    String description = '',
+    String logoUrl = '',
+    required String pickupLocation,
+    required bool deliveryAvailable,
+    required int deliveryFee,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (_myStore(ownerId) != null) {
+      throw Exception('Akun ini sudah memiliki toko — 1 akun hanya 1 toko.');
+    }
+    if (name.trim().length < 3) throw Exception('Nama toko minimal 3 karakter.');
+    if (pickupLocation.trim().isEmpty) throw Exception('Lokasi pickup wajib diisi.');
+    if (deliveryFee < 0) throw Exception('Biaya antar tidak valid.');
+    final s = StoreMock(
+      id: 'store-${DateTime.now().millisecondsSinceEpoch}',
+      name: name.trim(), description: description.trim().isEmpty ? 'Toko merchant SOUQNA.' : description.trim(),
+      pickupLocation: pickupLocation.trim(), deliveryAvailable: deliveryAvailable,
+      deliveryFee: deliveryAvailable ? deliveryFee : 0, status: 'active', ownerId: ownerId,
+    );
+    _extraStores.add(s);
+    return s;
+  }
+
+  Future<StoreMock> updateMyStore({
+    required String ownerId,
+    String? name,
+    String? description,
+    String? pickupLocation,
+    bool? deliveryAvailable,
+    int? deliveryFee,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    final cur = _myStore(ownerId);
+    if (cur == null) throw Exception('Belum punya toko.');
+    if (name != null && name.trim().length < 3) {
+      throw Exception('Nama toko minimal 3 karakter.');
+    }
+    if (pickupLocation != null && pickupLocation.trim().isEmpty) {
+      throw Exception('Lokasi pickup wajib diisi.');
+    }
+    if (deliveryFee != null && deliveryFee < 0) throw Exception('Biaya antar tidak valid.');
+    final upd = StoreMock(
+      id: cur.id, name: (name ?? cur.name).trim(),
+      description: (description ?? cur.description).trim(),
+      pickupLocation: (pickupLocation ?? cur.pickupLocation).trim(),
+      deliveryAvailable: deliveryAvailable ?? cur.deliveryAvailable,
+      deliveryFee: (deliveryAvailable ?? cur.deliveryAvailable)
+          ? (deliveryFee ?? cur.deliveryFee) : 0,
+      status: cur.status, ownerId: cur.ownerId,
+    );
+    final i = _extraStores.indexWhere((e) => e.id == cur.id);
+    if (i >= 0) {
+      _extraStores[i] = upd;
+    } else {
+      _storeOv[cur.id] = upd;
+    }
+    return upd;
+  }
+
+  Future<List<ProductMock>> getMyProducts(String storeId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final list = _allProducts().where((p) => p.storeId == storeId).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  Future<ProductMock> createMyProduct({
+    required String storeId,
+    required String ownerId,
+    required String name,
+    required String categoryId,
+    String description = '',
+    String status = 'draft',
+    String imageUrl = '',
+    required List<VariantMock> variants,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final st = _myStore(ownerId);
+    if (st == null || st.id != storeId) throw Exception('Belum punya toko.');
+    if (name.trim().length < 3) throw Exception('Nama produk minimal 3 karakter.');
+    if (!['draft', 'published', 'hidden'].contains(status)) {
+      throw Exception('Status tidak valid (draft/published/hidden).');
+    }
+    if (variants.isEmpty) throw Exception('Produk minimal punya 1 varian.');
+    for (final v in variants) {
+      if (v.label.trim().isEmpty) throw Exception('Label varian wajib diisi.');
+      if (v.price < 0 || v.stock < 0) throw Exception('Harga/stok varian tidak valid.');
+    }
+    final id = 'prod-${DateTime.now().millisecondsSinceEpoch}';
+    final p = ProductMock(
+      id: id, storeId: storeId, categoryId: categoryId,
+      name: name.trim(), description: description.trim().isEmpty ? '-' : description.trim(),
+      status: status, imageUrl: imageUrl.trim().isEmpty ? 'https://picsum.photos/seed/$id/600/600' : imageUrl.trim(),
+      createdAt: DateTime.now().toUtc().toIso8601String(),
+      variants: [
+        for (var i = 0; i < variants.length; i++)
+          VariantMock('var-${DateTime.now().millisecondsSinceEpoch}-$i',
+              variants[i].label.trim(), variants[i].price, variants[i].stock),
+      ],
+    );
+    _extraProducts.add(p);
+    return _eff(p);
+  }
+
+  Future<ProductMock> updateMyProduct({
+    required String ownerId,
+    required String productId,
+    String? name,
+    String? categoryId,
+    String? description,
+    String? status,
+    String? imageUrl,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    final st = _myStore(ownerId);
+    if (st == null) throw Exception('Belum punya toko.');
+    final live = _raw(productId);
+    if (live == null) throw Exception('Produk tidak ditemukan.');
+    if (live.storeId != st.id) throw Exception('Bukan produk tokomu.');
+    if (name != null && name.trim().length < 3) {
+      throw Exception('Nama produk minimal 3 karakter.');
+    }
+    if (status != null && !['draft', 'published', 'hidden'].contains(status)) {
+      throw Exception('Status tidak valid (draft/published/hidden).');
+    }
+    final ov = Map<String, String?>.from(_prodOv[productId] ?? {});
+    if (name != null) ov['name'] = name.trim();
+    if (categoryId != null) ov['categoryId'] = categoryId;
+    if (description != null) ov['description'] = description.trim();
+    if (status != null) ov['status'] = status;
+    if (imageUrl != null && imageUrl.trim().isNotEmpty) ov['imageUrl'] = imageUrl.trim();
+    _prodOv[productId] = ov;
+    return _eff(live);
+  }
+
+  Future<void> deleteMyProduct({required String ownerId, required String productId}) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    final st = _myStore(ownerId);
+    if (st == null) throw Exception('Belum punya toko.');
+    final live = _raw(productId);
+    if (live == null) throw Exception('Produk tidak ditemukan.');
+    if (live.storeId != st.id) throw Exception('Bukan produk tokomu.');
+    final i = _extraProducts.indexWhere((p) => p.id == productId);
+    if (i >= 0) {
+      _extraProducts.removeAt(i);
+      _prodOv.remove(productId);
+      _addedVars.remove(productId);
+    } else {
+      _deletedProd.add(productId); // arsip aman: hidden
+    }
+  }
+
+  Future<VariantMock> createMyVariant({
+    required String ownerId,
+    required String productId,
+    required String label,
+    required int price,
+    required int stock,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    final st = _myStore(ownerId);
+    if (st == null) throw Exception('Belum punya toko.');
+    final live = _raw(productId);
+    if (live == null) throw Exception('Produk tidak ditemukan.');
+    if (live.storeId != st.id) throw Exception('Bukan produk tokomu.');
+    if (label.trim().isEmpty) throw Exception('Label varian wajib diisi.');
+    if (price < 0 || stock < 0) throw Exception('Harga/stok tidak valid.');
+    final v = VariantMock('var-${DateTime.now().millisecondsSinceEpoch}',
+        label.trim(), price, stock);
+    (_addedVars[productId] ??= []).add(v);
+    _stockOv[v.id] = stock;
+    return v;
+  }
+
+  Future<VariantMock> updateMyVariant({
+    required String ownerId,
+    required String variantId,
+    String? label,
+    int? price,
+    int? stock,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    final st = _myStore(ownerId);
+    if (st == null) throw Exception('Belum punya toko.');
+    final pid = _ownerProductOf(variantId);
+    if (pid == null) throw Exception('Varian tidak ditemukan.');
+    final owner = _raw(pid);
+    if (owner == null) throw Exception('Varian tidak ditemukan.');
+    if (owner.storeId != st.id) throw Exception('Bukan produk tokomu.');
+    // Nilai kini dari view efektif (untuk fallback field tak diubah).
+    VariantMock? cur;
+    for (final v in _eff(owner).variants) {
+      if (v.id == variantId) cur = v;
+    }
+    if (cur == null) throw Exception('Varian tidak ditemukan.');
+    if (label != null && label.trim().isEmpty) {
+      throw Exception('Label varian wajib diisi.');
+    }
+    if (price != null && price < 0) throw Exception('Harga tidak valid.');
+    if (stock != null && stock < 0) throw Exception('Stok tidak valid.');
+    final upd = VariantMock(variantId, (label ?? cur.label).trim(),
+        price ?? cur.price, stock ?? cur.stock);
+    _varOv[variantId] = upd;
+    _stockOv[variantId] = upd.stock;
+    return upd;
+  }
+
   Future<List<Category>> getCategories() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return categoriesMock;
@@ -133,7 +414,7 @@ class ApiClient {
 
   Future<List<StoreMock>> getStores() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return storesMock.where((s) => s.status == 'active').toList();
+    return _allStores().where((s) => s.status == 'active').toList();
   }
 
   Future<Paged<ProductMock>> getProducts({
@@ -147,8 +428,8 @@ class ApiClient {
     int limit = 12,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final active = storesMock.where((s) => s.status == 'active').map((s) => s.id).toSet();
-    var list = productsMock.where((p) {
+    final active = _allStores().where((s) => s.status == 'active').map((s) => s.id).toSet();
+    var list = _allProducts().where((p) {
       if (p.status != 'published') return false;
       if (!active.contains(p.storeId)) return false;
       if (categoryId != null && categoryId.isNotEmpty && p.categoryId != categoryId) return false;
@@ -186,7 +467,7 @@ class ApiClient {
   Future<ProductMock?> getProduct(String id) async {
     await Future.delayed(const Duration(milliseconds: 300));
     try {
-      return productsMock.firstWhere((p) => p.id == id);
+      return _allProducts().firstWhere((p) => p.id == id);
     } catch (_) {
       return null;
     }
@@ -195,7 +476,7 @@ class ApiClient {
   Future<StoreMock?> getStore(String id) async {
     await Future.delayed(const Duration(milliseconds: 300));
     try {
-      return storesMock.firstWhere((s) => s.id == id);
+      return _allStores().firstWhere((s) => s.id == id);
     } catch (_) {
       return null;
     }
@@ -203,7 +484,7 @@ class ApiClient {
 
   Future<List<ProductMock>> getStoreProducts(String storeId) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return productsMock.where((p) => p.storeId == storeId && p.status == 'published').toList();
+    return _allProducts().where((p) => p.storeId == storeId && p.status == 'published').toList();
   }
 
   // --- Cart multi-toko (in-memory dummy, shared antar layar) ---
@@ -217,12 +498,12 @@ class ApiClient {
   int _stockOf(String variantId, int base) => _stockOv[variantId] ?? base;
 
   ({ProductMock p, VariantMock v, StoreMock? s})? _resolve(String variantId) {
-    for (final p in productsMock) {
+    for (final p in _allProducts()) {
       for (final v in p.variants) {
         if (v.id == variantId) {
           StoreMock? s;
           try {
-            s = storesMock.firstWhere((x) => x.id == p.storeId);
+            s = _allStores().firstWhere((x) => x.id == p.storeId);
           } catch (_) {}
           return (p: p, v: v, s: s);
         }
@@ -325,7 +606,7 @@ class ApiClient {
       final m = methods[sid];
       StoreMock? st;
       try {
-        st = storesMock.firstWhere((x) => x.id == sid);
+        st = _allStores().firstWhere((x) => x.id == sid);
       } catch (_) {}
       if (m == null) {
         errors.add('Pilih pickup/diantar untuk toko ${st?.name ?? sid}.');
@@ -359,7 +640,7 @@ class ApiClient {
     for (var idx = 0; idx < sids.length; idx++) {
       final sid = sids[idx];
       final ls = byStore[sid]!;
-      final st = storesMock.firstWhere((x) => x.id == sid);
+      final st = _allStores().firstWhere((x) => x.id == sid);
       final sub = ls.fold(0, (s, l) => s + l.lineTotal);
       final d = idx < sids.length - 1 ? (discount * sub / subtotal).round() : discount - acc;
       acc += d;
@@ -445,7 +726,7 @@ class ApiClient {
 
   Future<List<OrderMock>> getMerchantOrders(String ownerId) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final mine = storesMock.where((s) => s.ownerId == ownerId).map((s) => s.id).toSet();
+    final mine = _allStores().where((s) => s.ownerId == ownerId).map((s) => s.id).toSet();
     return _orders.where((o) => mine.contains(o.storeId)).toList();
   }
 

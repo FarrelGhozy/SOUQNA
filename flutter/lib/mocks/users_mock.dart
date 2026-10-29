@@ -19,9 +19,9 @@ class UserMock {
     this.defaultLocation,
   });
 
-  UserMock copyWith({String? fullName, String? phone, String? defaultLocation}) => UserMock(
+  UserMock copyWith({String? fullName, String? phone, String? defaultLocation, bool? hasStore, String? storeId}) => UserMock(
     id: id, fullName: fullName ?? this.fullName, email: email,
-    role: role, hasStore: hasStore, storeId: storeId,
+    role: role, hasStore: hasStore ?? this.hasStore, storeId: storeId ?? this.storeId,
     phone: phone ?? this.phone, defaultLocation: defaultLocation ?? this.defaultLocation,
   );
 }

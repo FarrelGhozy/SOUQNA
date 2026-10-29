@@ -7,9 +7,9 @@ import {
   checkouts as seedCheckouts, conversations, messages, orders as seedOrders,
   orderItems as seedOrderItems, reviews, users, vouchers, wishlist,
 } from '../mocks/extras.mock.js';
-import type { Checkout, Order, OrderItem, OrderStatusHistory, Product } from '../types/index.js';
+import type { Checkout, Order, OrderItem, OrderStatusHistory, Product, ProductVariant, Store } from '../types/index.js';
 import { delay } from './format.js';
-import { currentSession, updateProfile } from './mock-auth.js';
+import { attachStore, currentSession, updateProfile } from './mock-auth.js';
 
 export type ProductSort = 'terbaru' | 'termurah' | 'termahal' | 'nama';
 export interface ProductQuery {
@@ -22,7 +22,7 @@ export interface Paged<T> { data: T[]; total: number; page: number; limit: numbe
 // Helper simulasi server: harga dihitung dari varian, bukan input komponen.
 export const productMinPrice = (p: Product) => Math.min(...p.variants.map((v) => v.price));
 export const isProductOutOfStock = (p: Product) => p.variants.every((v) => v.stock_quantity === 0);
-const activeStoreIds = () => new Set(stores.filter((s) => s.status === 'active').map((s) => s.id));
+const activeStoreIds = () => new Set(allStores().filter((s) => s.status === 'active').map((s) => s.id));
 
 const hasStorage = () => typeof localStorage !== 'undefined';
 const readJSON = <T>(key: string, fallback: T): T => {
@@ -35,6 +35,89 @@ const readJSON = <T>(key: string, fallback: T): T => {
 const writeJSON = (key: string, v: unknown) => {
   try { if (hasStorage()) localStorage.setItem(key, JSON.stringify(v)); } catch { /* abaikan */ }
 };
+
+// --- Toko merchant dummy: base + extra (localStorage) + override profil ---
+const MSTORE_KEY = 'souqna:extra-stores';
+const STORE_OV_KEY = 'souqna:store-overrides';
+let extraStoreCache: Store[] | null = null;
+function extraStores(): Store[] {
+  if (!extraStoreCache) extraStoreCache = readJSON<Store[]>(MSTORE_KEY, []);
+  return extraStoreCache;
+}
+function saveExtraStores() { writeJSON(MSTORE_KEY, extraStores()); }
+function applyStoreOverrides() {
+  const ov = readJSON<Record<string, Partial<Store>>>(STORE_OV_KEY, {});
+  for (const s of stores) {
+    const o = ov[s.id];
+    if (o) Object.assign(s, o);
+  }
+}
+applyStoreOverrides();
+function saveStoreOv(s: Store) {
+  const ov = readJSON<Record<string, Partial<Store>>>(STORE_OV_KEY, {});
+  ov[s.id] = { ...s };
+  writeJSON(STORE_OV_KEY, ov);
+}
+function allStores(): Store[] { return [...stores, ...extraStores()]; }
+function persistStore(s: Store) {
+  if (stores.some((x) => x.id === s.id)) saveStoreOv(s);
+  else saveExtraStores();
+}
+const slugify = (name: string) =>
+  name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `toko-${Date.now()}`;
+function uniqueSlug(base: string): string {
+  const taken = new Set(allStores().map((s) => s.slug));
+  if (!taken.has(base)) return base;
+  let i = 2;
+  while (taken.has(`${base}-${i}`)) i++;
+  return `${base}-${i}`;
+}
+function myStore(): Store | null {
+  const me = currentSession();
+  if (!me) return null;
+  return allStores().find((s) => s.owner_id === me.id) ?? null;
+}
+
+// --- Produk merchant dummy: base (+override persist) + extra (localStorage) ---
+const MPROD_KEY = 'souqna:extra-products';
+const PROD_OV_KEY = 'souqna:product-overrides';
+let extraProductCache: Product[] | null = null;
+function extraProducts(): Product[] {
+  if (!extraProductCache) {
+    extraProductCache = readJSON<Product[]>(MPROD_KEY, []);
+    const ov = readJSON<Record<string, number>>(STOCK_KEY, {});
+    for (const p of extraProductCache) {
+      for (const v of p.variants) {
+        if (typeof ov[v.id] === 'number') v.stock_quantity = ov[v.id];
+      }
+    }
+  }
+  return extraProductCache;
+}
+function saveExtraProducts() { writeJSON(MPROD_KEY, extraProducts()); }
+function applyProductOverrides() {
+  const ov = readJSON<Record<string, Product>>(PROD_OV_KEY, {});
+  for (const p of products) {
+    const snap = ov[p.id];
+    if (!snap || !Array.isArray(snap.variants)) continue;
+    const stocks = new Map(p.variants.map((v) => [v.id, v.stock_quantity]));
+    Object.assign(p, { ...snap, id: p.id, store_id: p.store_id });
+    for (const v of p.variants) {
+      if (stocks.has(v.id)) v.stock_quantity = stocks.get(v.id)!;
+    }
+  }
+}
+function saveProdOv(p: Product) {
+  const ov = readJSON<Record<string, Product>>(PROD_OV_KEY, {});
+  ov[p.id] = JSON.parse(JSON.stringify(p)) as Product;
+  writeJSON(PROD_OV_KEY, ov);
+}
+function allProducts(): Product[] { return [...products, ...extraProducts()]; }
+function persistProduct(p: Product) {
+  if (products.some((x) => x.id === p.id)) saveProdOv(p);
+  else saveExtraProducts();
+}
+applyProductOverrides();
 
 // --- Stok dummy: override persist agar pengurangan stok selamat reload ---
 const STOCK_KEY = 'souqna:stock-overrides';
@@ -78,10 +161,10 @@ function loadCart(): CartLine[] {
 function saveCart(c: CartLine[]) { writeJSON(CART_KEY, c); }
 
 function resolveVariant(variantId: string) {
-  for (const p of products) {
+  for (const p of allProducts()) {
     const v = p.variants.find((x) => x.id === variantId);
     if (v) {
-      const s = stores.find((x) => x.id === p.store_id) ?? null;
+      const s = allStores().find((x) => x.id === p.store_id) ?? null;
       return { product: p, variant: v, store: s };
     }
   }
@@ -173,7 +256,7 @@ export function previewCheckout(input: CheckoutInput): CheckoutPreview {
 
   for (const [sid] of byStore) {
     const f = input.fulfillment[sid];
-    const st = stores.find((x) => x.id === sid);
+    const st = allStores().find((x) => x.id === sid);
     if (!f) { errors.push(`Pilih pickup/diantar untuk toko ${(st?.name ?? sid)}.`); continue; }
     if (f.method === 'merchant_delivery') {
       if (!st?.delivery_available) errors.push(`${st?.name ?? sid} tidak melayani pengantaran.`);
@@ -196,7 +279,7 @@ export function previewCheckout(input: CheckoutInput): CheckoutPreview {
   const sids = [...byStore.keys()];
   const perStore: StoreBreakdown[] = sids.map((sid, idx) => {
     const ls = byStore.get(sid)!;
-    const st = stores.find((x) => x.id === sid)!;
+    const st = allStores().find((x) => x.id === sid)!;
     const f = input.fulfillment[sid];
     const sub = ls.reduce((s, l) => s + l.line_total, 0);
     const disc = idx < sids.length - 1
@@ -290,12 +373,13 @@ function returnStockOnce(o: Order) {
   if (done.has(o.id)) return;
   const items = [...seedOrderItems, ...extraOrderItems()].filter((i) => i.order_id === o.id);
   for (const it of items) {
-    for (const p of products) {
+    for (const p of allProducts()) {
       const v = p.variants.find((x) => x.id === it.product_variant_id);
       if (v) v.stock_quantity += it.quantity;
     }
   }
   persistStock();
+  saveExtraProducts();
   done.add(o.id);
   writeJSON(RETURNED_KEY, [...done]);
 }
@@ -308,7 +392,7 @@ function applyTransition(orderId: string, action: OrderAction): Order {
   if (!me) throw new Error('Wajib login.');
   const o = findOrder(orderId);
   if (!o) throw new Error('Pesanan tidak ditemukan.');
-  const store = stores.find((s) => s.id === o.store_id);
+  const store = allStores().find((s) => s.id === o.store_id);
   const isBuyer = o.buyer_id === me.id;
   const isMerchant = store?.owner_id === me.id;
   const from = o.status;
@@ -376,12 +460,12 @@ function applyTransition(orderId: string, action: OrderAction): Order {
 
 export const api = {
   async getCategories() { await delay(); return categories.filter((c) => c.is_active); },
-  async getStores() { await delay(); return stores.filter((s) => s.status === 'active'); },
+  async getStores() { await delay(); return allStores().filter((s) => s.status === 'active'); },
 
   async getProducts(params: ProductQuery = {}): Promise<Paged<Product>> {
     await delay();
     const active = activeStoreIds();
-    let list = products.filter((p) => {
+    let list = allProducts().filter((p) => {
       if (p.status !== 'published') return false;
       if (!active.has(p.store_id)) return false; // toko nonaktif tidak tampil di katalog
       if (params.categoryId && p.category_id !== params.categoryId) return false;
@@ -412,9 +496,9 @@ export const api = {
     return { data, total, page, limit };
   },
 
-  async getProduct(id: string) { await delay(); return products.find((p) => p.id === id) ?? null; },
-  async getStore(id: string) { await delay(); return stores.find((s) => s.id === id) ?? null; },
-  async getStoreProducts(storeId: string) { await delay(); return products.filter((p) => p.store_id === storeId && p.status === 'published'); },
+  async getProduct(id: string) { await delay(); return allProducts().find((p) => p.id === id) ?? null; },
+  async getStore(id: string) { await delay(); return allStores().find((s) => s.id === id) ?? null; },
+  async getStoreProducts(storeId: string) { await delay(); return allProducts().filter((p) => p.store_id === storeId && p.status === 'published'); },
 
   async getMe() { await delay(150); return currentSession(); },
   async updateMe(patch: { full_name?: string; phone?: string; default_location?: string }) {
@@ -486,6 +570,7 @@ export const api = {
       }
     }
     persistStock();
+    saveExtraProducts();
 
     const seq = extraCheckouts().length + seedCheckouts.length + 1;
     const checkout: Checkout = {
@@ -543,7 +628,7 @@ export const api = {
     await delay();
     const me = currentSession();
     if (!me) throw new Error('Wajib login.');
-    const mine = stores.filter((s) => s.owner_id === me.id).map((s) => s.id);
+    const mine = allStores().filter((s) => s.owner_id === me.id).map((s) => s.id);
     return allOrders().filter((o) => mine.includes(o.store_id));
   },
   async getOrderHistory(orderId: string): Promise<OrderStatusHistory[]> {
@@ -558,6 +643,231 @@ export const api = {
   async getCheckouts() {
     await delay();
     return [...extraCheckouts(), ...seedCheckouts];
+  },
+  // --- Merchant dummy: toko + produk milik sendiri (simulasi server: ownership) ---
+  async getMyStore(): Promise<Store | null> {
+    await delay(150);
+    const s = myStore();
+    return s ? { ...s } : null;
+  },
+  async createMyStore(input: {
+    name: string; description?: string; logo_url?: string;
+    pickup_location: string; delivery_available: boolean; delivery_fee: number;
+  }): Promise<Store> {
+    await delay(300);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login untuk jadi merchant.');
+    if (myStore()) throw new Error('Akun ini sudah memiliki toko — 1 akun hanya 1 toko.');
+    const name = input.name.trim();
+    if (name.length < 3) throw new Error('Nama toko minimal 3 karakter.');
+    const pickup = input.pickup_location.trim();
+    if (!pickup) throw new Error('Lokasi pickup wajib diisi.');
+    const fee = Math.floor(Number(input.delivery_fee));
+    if (!Number.isFinite(fee) || fee < 0) throw new Error('Biaya antar tidak valid.');
+    const logo = input.logo_url?.trim() ?? '';
+    const slug = uniqueSlug(slugify(name));
+    const store: Store = {
+      id: `store-${Date.now()}`, owner_id: me.id, name, slug,
+      description: input.description?.trim() || 'Toko merchant SOUQNA.',
+      ...(logo ? { logo_url: logo } : {}),
+      pickup_location: pickup, delivery_available: input.delivery_available,
+      delivery_fee: input.delivery_available ? fee : 0, status: 'active',
+    };
+    extraStores().push(store);
+    saveExtraStores();
+    attachStore(store.id);
+    return { ...store };
+  },
+  async updateMyStore(patch: {
+    name?: string; description?: string; logo_url?: string;
+    pickup_location?: string; delivery_available?: boolean; delivery_fee?: number;
+  }): Promise<Store> {
+    await delay(250);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    if (patch.name !== undefined) {
+      const name = patch.name.trim();
+      if (name.length < 3) throw new Error('Nama toko minimal 3 karakter.');
+      s.name = name;
+    }
+    if (patch.description !== undefined) s.description = patch.description.trim();
+    if (patch.logo_url !== undefined) {
+      if (patch.logo_url.trim()) s.logo_url = patch.logo_url.trim();
+      else delete s.logo_url;
+    }
+    if (patch.pickup_location !== undefined) {
+      if (!patch.pickup_location.trim()) throw new Error('Lokasi pickup wajib diisi.');
+      s.pickup_location = patch.pickup_location.trim();
+    }
+    if (patch.delivery_available !== undefined) s.delivery_available = patch.delivery_available;
+    if (patch.delivery_fee !== undefined) {
+      const fee = Math.floor(Number(patch.delivery_fee));
+      if (!Number.isFinite(fee) || fee < 0) throw new Error('Biaya antar tidak valid.');
+      s.delivery_fee = fee;
+    }
+    if (!s.delivery_available) s.delivery_fee = 0;
+    persistStore(s);
+    return { ...s };
+  },
+  async getMyProducts(): Promise<Product[]> {
+    await delay(200);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    return allProducts()
+      .filter((p) => p.store_id === s.id)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .map((p) => ({ ...p, variants: p.variants.map((v) => ({ ...v })) }));
+  },
+  async createMyProduct(input: {
+    name: string; category_id: string; description?: string;
+    status?: Product['status']; image_url?: string;
+    variants: { label: string; price: number; stock_quantity: number }[];
+  }): Promise<Product> {
+    await delay(300);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    const name = input.name.trim();
+    if (name.length < 3) throw new Error('Nama produk minimal 3 karakter.');
+    if (!categories.some((c) => c.id === input.category_id && c.is_active))
+      throw new Error('Kategori tidak valid.');
+    const status = input.status ?? 'draft';
+    if (!['draft', 'published', 'hidden'].includes(status))
+      throw new Error('Status tidak valid (draft/published/hidden).');
+    if (!input.variants || input.variants.length === 0)
+      throw new Error('Produk minimal punya 1 varian.');
+    const now = new Date().toISOString();
+    const id = `prod-${Date.now()}`;
+    const variants: ProductVariant[] = input.variants.map((v, i) => {
+      const label = v.label.trim();
+      if (!label) throw new Error(`Varian ke-${i + 1}: label wajib diisi.`);
+      const price = Math.floor(Number(v.price));
+      const stock = Math.floor(Number(v.stock_quantity));
+      if (!Number.isFinite(price) || price < 0) throw new Error(`Varian "${label}": harga tidak valid.`);
+      if (!Number.isFinite(stock) || stock < 0) throw new Error(`Varian "${label}": stok tidak valid.`);
+      return {
+        id: `var-${Date.now()}-${i}`, product_id: id, label,
+        options: { varian: label }, price, stock_quantity: stock, is_active: true,
+      };
+    });
+    const p: Product = {
+      id, store_id: s.id, category_id: input.category_id, name,
+      slug: `${slugify(name)}-${id.slice(-4)}`,
+      description: input.description?.trim() || '-',
+      status, image_url: input.image_url?.trim() || `https://picsum.photos/seed/${id}/600/600`,
+      variants, created_at: now,
+    };
+    extraProducts().push(p);
+    saveExtraProducts();
+    return { ...p, variants: p.variants.map((v) => ({ ...v })) };
+  },
+  async updateMyProduct(id: string, patch: {
+    name?: string; category_id?: string; description?: string;
+    status?: Product['status']; image_url?: string;
+  }): Promise<Product> {
+    await delay(250);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    const p = allProducts().find((x) => x.id === id);
+    if (!p) throw new Error('Produk tidak ditemukan.');
+    if (p.store_id !== s.id) throw new Error('Bukan produk tokomu — tidak bisa diubah.');
+    if (patch.name !== undefined) {
+      if (patch.name.trim().length < 3) throw new Error('Nama produk minimal 3 karakter.');
+      p.name = patch.name.trim();
+    }
+    if (patch.category_id !== undefined) {
+      if (!categories.some((c) => c.id === patch.category_id && c.is_active))
+        throw new Error('Kategori tidak valid.');
+      p.category_id = patch.category_id;
+    }
+    if (patch.description !== undefined) p.description = patch.description.trim();
+    if (patch.status !== undefined) {
+      if (!['draft', 'published', 'hidden'].includes(patch.status))
+        throw new Error('Status tidak valid (draft/published/hidden).');
+      p.status = patch.status;
+    }
+    if (patch.image_url !== undefined && patch.image_url.trim()) p.image_url = patch.image_url.trim();
+    persistProduct(p);
+    return { ...p, variants: p.variants.map((v) => ({ ...v })) };
+  },
+  async deleteMyProduct(id: string): Promise<void> {
+    await delay(250);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    const p = allProducts().find((x) => x.id === id);
+    if (!p) throw new Error('Produk tidak ditemukan.');
+    if (p.store_id !== s.id) throw new Error('Bukan produk tokomu — tidak bisa dihapus.');
+    const extras = extraProducts();
+    const i = extras.findIndex((x) => x.id === id);
+    if (i >= 0) {
+      extras.splice(i, 1);
+      saveExtraProducts();
+    } else {
+      // Arsip aman: hidden agar snapshot order tetap valid.
+      p.status = 'hidden';
+      persistProduct(p);
+    }
+  },
+  async createMyVariant(productId: string, input: {
+    label: string; price: number; stock_quantity: number;
+  }): Promise<ProductVariant> {
+    await delay(250);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    const p = allProducts().find((x) => x.id === productId);
+    if (!p) throw new Error('Produk tidak ditemukan.');
+    if (p.store_id !== s.id) throw new Error('Bukan produk tokomu.');
+    const label = input.label.trim();
+    if (!label) throw new Error('Label varian wajib diisi.');
+    const price = Math.floor(Number(input.price));
+    const stock = Math.floor(Number(input.stock_quantity));
+    if (!Number.isFinite(price) || price < 0) throw new Error('Harga tidak valid.');
+    if (!Number.isFinite(stock) || stock < 0) throw new Error('Stok tidak valid.');
+    const v: ProductVariant = {
+      id: `var-${Date.now()}`, product_id: p.id, label,
+      options: { varian: label }, price, stock_quantity: stock, is_active: true,
+    };
+    p.variants.push(v);
+    persistProduct(p);
+    persistStock();
+    saveExtraProducts();
+    return { ...v };
+  },
+  async updateMyVariant(variantId: string, patch: {
+    label?: string; price?: number; stock_quantity?: number; is_active?: boolean;
+  }): Promise<ProductVariant> {
+    await delay(250);
+    if (!currentSession()) throw new Error('Wajib login.');
+    const s = myStore();
+    if (!s) throw new Error('Belum punya toko.');
+    const p = allProducts().find((x) => x.variants.some((v) => v.id === variantId));
+    if (!p) throw new Error('Varian tidak ditemukan.');
+    if (p.store_id !== s.id) throw new Error('Bukan produk tokomu.');
+    const v = p.variants.find((x) => x.id === variantId)!;
+    if (patch.label !== undefined) {
+      if (!patch.label.trim()) throw new Error('Label varian wajib diisi.');
+      v.label = patch.label.trim();
+    }
+    if (patch.price !== undefined) {
+      const price = Math.floor(Number(patch.price));
+      if (!Number.isFinite(price) || price < 0) throw new Error('Harga tidak valid.');
+      v.price = price;
+    }
+    if (patch.stock_quantity !== undefined) {
+      const stock = Math.floor(Number(patch.stock_quantity));
+      if (!Number.isFinite(stock) || stock < 0) throw new Error('Stok tidak valid.');
+      v.stock_quantity = stock;
+    }
+    if (patch.is_active !== undefined) v.is_active = patch.is_active;
+    persistProduct(p);
+    persistStock();
+    saveExtraProducts();
+    return { ...v };
   },
   async getWishlist() { await delay(); return wishlist; },
   async getConversations() { await delay(); return conversations; },

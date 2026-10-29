@@ -14,7 +14,12 @@ import { CheckoutSuccessPage } from '../pages/CheckoutSuccessPage.js';
 import { OrdersPage } from '../pages/OrdersPage.js';
 import { OrderDetailPage } from '../pages/OrderDetailPage.js';
 import { MerchantOrdersPage } from '../pages/MerchantOrdersPage.js';
-import { WishlistPage, ChatPage, BecomeMerchantPage, MerchantDashboard, AdminDashboard } from '../pages/MiscPages.js';
+import { BecomeMerchantPage } from '../pages/BecomeMerchantPage.js';
+import { MerchantDashboardPage } from '../pages/MerchantDashboardPage.js';
+import { MerchantProductsPage } from '../pages/MerchantProductsPage.js';
+import { MerchantProductFormPage } from '../pages/MerchantProductFormPage.js';
+import { StoreProfilePage } from '../pages/StoreProfilePage.js';
+import { WishlistPage, ChatPage, AdminDashboard } from '../pages/MiscPages.js';
 import { RequireAuth, RequireMerchant, RequireAdmin } from './guards.js';
 
 export const router = createBrowserRouter([
@@ -52,7 +57,11 @@ export const router = createBrowserRouter([
   {
     element: <MerchantLayout />,
     children: [
-      { path: '/merchant', element: <RequireMerchant><MerchantDashboard /></RequireMerchant> },
+      { path: '/merchant', element: <RequireMerchant><MerchantDashboardPage /></RequireMerchant> },
+      { path: '/merchant/store', element: <RequireMerchant><StoreProfilePage /></RequireMerchant> },
+      { path: '/merchant/products', element: <RequireMerchant><MerchantProductsPage /></RequireMerchant> },
+      { path: '/merchant/products/new', element: <RequireMerchant><MerchantProductFormPage /></RequireMerchant> },
+      { path: '/merchant/products/:productId/edit', element: <RequireMerchant><MerchantProductFormPage /></RequireMerchant> },
       { path: '/merchant/orders', element: <RequireMerchant><MerchantOrdersPage /></RequireMerchant> },
       { path: '/merchant/orders/:orderId', element: <RequireMerchant><OrderDetailPage /></RequireMerchant> },
     ],

@@ -17,8 +17,6 @@ export function ChatPage() {
     {msgs.map((m) => <div key={m.id} style={{ borderBottom: '1px solid #eee', padding: 4 }}><small>{m.created_at}</small> — {m.body}</div>)}
   </>);
 }
-export function BecomeMerchantPage() { return (<><h1>Jadi Merchant</h1><p>Form dummy: nama toko, deskripsi, lokasi pickup, delivery fee. 1 akun 1 toko.</p><button onClick={() => alert('Toko dummy dibuat')}>Buat toko</button></>); }
-export function MerchantDashboard() { return (<><h1>Dashboard Merchant</h1><p>Ringkasan order + produk dummy milik toko.</p></>); }
 export function AdminDashboard() {
   const [v, setV] = useState<any[]>([]);
   useEffect(() => { api.getVouchers().then(setV); }, []);

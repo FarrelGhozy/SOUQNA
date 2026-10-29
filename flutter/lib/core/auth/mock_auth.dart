@@ -132,4 +132,13 @@ class MockAuth {
     session.value = null;
     await _persist();
   }
+
+  /// Tandai sesi punya toko (dipanggil setelah createMyStore sukses).
+  Future<UserMock> attachStore(String storeId) async {
+    final s = session.value;
+    if (s == null) throw Exception('Belum login.');
+    session.value = s.copyWith(hasStore: true, storeId: storeId);
+    await _persist();
+    return session.value!;
+  }
 }
