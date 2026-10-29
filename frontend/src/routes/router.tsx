@@ -6,11 +6,13 @@ import { ProductDetailPage } from '../pages/ProductDetailPage.js';
 import { StoreDetailPage } from '../pages/StoreDetailPage.js';
 import { CategoryListPage } from '../pages/CategoryListPage.js';
 import { LoginPage } from '../pages/LoginPage.js';
+import { RegisterPage } from '../pages/RegisterPage.js';
+import { ProfilePage } from '../pages/ProfilePage.js';
 import { CartPage } from '../pages/CartPage.js';
 import { CheckoutPage } from '../pages/CheckoutPage.js';
 import { OrdersPage } from '../pages/OrdersPage.js';
 import { OrderDetailPage } from '../pages/OrderDetailPage.js';
-import { WishlistPage, ChatPage, ProfilePage, BecomeMerchantPage, MerchantDashboard, AdminDashboard } from '../pages/MiscPages.js';
+import { WishlistPage, ChatPage, BecomeMerchantPage, MerchantDashboard, AdminDashboard } from '../pages/MiscPages.js';
 import { RequireAuth, RequireMerchant, RequireAdmin } from './guards.js';
 
 export const router = createBrowserRouter([
@@ -26,7 +28,10 @@ export const router = createBrowserRouter([
   },
   {
     element: <AuthLayout />,
-    children: [{ path: '/login', element: <LoginPage /> }],
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+    ],
   },
   {
     element: <AccountLayout />,

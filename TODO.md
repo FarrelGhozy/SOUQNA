@@ -22,10 +22,10 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M2 — Auth dummy + profil · issue #2
 
-- [ ] Login/register dummy (email apa saja) + switch peran pembeli/merchant/admin
-- [ ] Guard route: `/cart /checkout /orders /wishlist /chat /me` minta login
-- [ ] Profil edit nama/telepon/lokasi (localStorage), logout
-- [ ] Guard merchant (`hasStore`) dan admin (`isAdmin`); tanpa role dari input user
+- [x] Login/register dummy (email apa saja) + switch peran pembeli/merchant/admin
+- [x] Guard route: `/cart /checkout /orders /wishlist /chat /me` minta login
+- [x] Profil edit nama/telepon/lokasi (localStorage), logout
+- [x] Guard merchant (`hasStore`) dan admin (`isAdmin`); tanpa role dari input user
 
 ## M3 — Cart + checkout dummy · issue #3
 

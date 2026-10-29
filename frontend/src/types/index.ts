@@ -28,7 +28,10 @@ export interface OrderItem {
   product_name_snapshot: string; variant_options_snapshot: string;
   unit_price_snapshot: number; quantity: number; line_total: number;
 }
-export interface MockUser { id: string; full_name: string; email: string; role: 'buyer' | 'merchant' | 'admin'; hasStore: boolean; store_id?: string }
+export interface MockUser {
+  id: string; full_name: string; email: string; role: 'buyer' | 'merchant' | 'admin';
+  hasStore: boolean; store_id?: string; phone?: string; default_location?: string;
+}
 export interface WishlistItem { id: string; user_id: string; product_id: string; created_at: string }
 export interface Conversation { id: string; buyer_id: string; store_id: string; created_at: string }
 export interface Message { id: string; conversation_id: string; sender_id: string; body: string; created_at: string }

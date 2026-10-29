@@ -6,7 +6,7 @@ import { products } from '../mocks/products.mock.js';
 import { checkouts, conversations, messages, orders, orderItems, reviews, users, vouchers, wishlist } from '../mocks/extras.mock.js';
 import type { Product } from '../types/index.js';
 import { delay } from './format.js';
-import { currentSession } from './mock-auth.js';
+import { currentSession, updateProfile } from './mock-auth.js';
 
 export type ProductSort = 'terbaru' | 'termurah' | 'termahal' | 'nama';
 export interface ProductQuery {
@@ -64,6 +64,10 @@ export const api = {
   async getStoreProducts(storeId: string) { await delay(); return products.filter((p) => p.store_id === storeId && p.status === 'published'); },
 
   async getMe() { await delay(150); return currentSession(); },
+  async updateMe(patch: { full_name?: string; phone?: string; default_location?: string }) {
+    await delay(200);
+    return updateProfile(patch);
+  },
   async getCart() {
     await delay();
     const raw = localStorage.getItem('souqna:cart');

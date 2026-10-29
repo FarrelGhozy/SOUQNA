@@ -21,7 +21,10 @@ function Nav() {
           <button onClick={() => { logout(); nav('/'); }}>Keluar</button>
         </>
       ) : (
-        <Link to="/login">Masuk</Link>
+        <>
+          <Link to="/login">Masuk</Link>
+          <Link to="/register">Daftar</Link>
+        </>
       )}
     </header>
   );
