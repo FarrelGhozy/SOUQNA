@@ -3,8 +3,8 @@ import '../../core/auth/mock_auth.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
 import '../../features/cart/screens/cart_screen.dart';
+import '../../features/catalog/screens/category_list_screen.dart';
 import '../../features/catalog/screens/home_screen.dart';
-import '../../features/catalog/screens/search_screen.dart';
 import '../../features/orders/screens/orders_screen.dart';
 
 // Bottom nav 5 tab. Tab personal (keranjang/pesanan/akun) wajib login —
@@ -37,7 +37,7 @@ class _BottomNavState extends State<BottomNav> {
       case 0:
         return const HomeScreen();
       case 1:
-        return const SearchScreen();
+        return const CategoryListScreen();
       case 2:
         return const CartScreen();
       case 3:

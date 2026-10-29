@@ -58,9 +58,9 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M8 — Parity + demo · issue #8
 
-- [ ] Tiap layar M1–M6 ada di Flutter dengan data sama
-- [ ] Skrip demo E2E (search → login → toko → produk → cart 2 toko → checkout → proses → COD → review/wishlist/chat → voucher)
-- [ ] `docs/ERD.md` + OpenAPI stub saat backend dimulai
+- [x] Tiap layar M1–M6 ada di Flutter dengan data sama (lihat `docs/parity-audit.md`; M8 tambah `category_list_screen`, `vouchers_mock` + `getVouchers/validateVoucher`, fix `+ Keranjang` asli, hapus `souqna_mock.dart` mati)
+- [x] Skrip demo E2E (search → login → toko → produk → cart 2 toko → checkout → proses → COD → review/wishlist/chat → voucher) — `docs/demo-e2e.md` + `./scripts/demo-e2e.sh` LOLOS (web build lolos; Android manual setelah SDK ada)
+- [x] `docs/ERD.md` final + OpenAPI stub (`docs/openapi.yaml`) dari `docs/api-contract.md` saat backend dimulai
 
 ## NANTI (jangan kerjakan sekarang)
 

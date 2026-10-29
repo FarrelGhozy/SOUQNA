@@ -17,13 +17,11 @@ flutter/lib/
 ├── mocks/
 │   ├── categories_mock.dart  # 6 kategori (sama dengan web)
 │   ├── stores_mock.dart      # 4 toko
-│   ├── products_mock.dart    # ~20 produk + varian
+│   ├── products_mock.dart    # 20 produk + varian
 │   ├── users_mock.dart
-│   ├── cart_mock.dart
-│   ├── orders_mock.dart
-│   ├── wishlist_mock.dart
-│   ├── chat_mock.dart
-│   └── vouchers_mock.dart
+│   └── vouchers_mock.dart    # HEMAT5K valid + KADALUARSA expired (aturan = web)
+│   # cart/orders/wishlist/chat/review: in-memory di core/api/api_client.dart
+│   # (seed sama dengan frontend/src/mocks/extras.mock.ts)
 ├── features/<fitur>/data, providers, screens, widgets
 └── shared/widgets, theme
 ```
@@ -32,6 +30,7 @@ flutter/lib/
 
 - ID/slug/nama/harga/stok/status sama persis dengan `frontend/src/mocks/`. Ubah di satu sisi → ubah di sisi lain.
 - Bottom nav 5 tab: Beranda, Kategori, Keranjang, Pesanan, Akun (lihat `docs/pages-ux.md`).
+  Tab Kategori = `category_list_screen.dart` (parity `/categories`) → ketuk masuk pencarian terfilter.
 - Merchant screens hanya jika `mockUser.hasStore`; admin screens disembunyikan (prioritas web).
 - Dio dipasang dari awal tapi interceptor mengarah ke mock (flag `USE_MOCK=true`); saat backend siap tinggal flip flag + base URL.
 - Format IDR: `NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)`. Tanggal Asia/Jakarta manual (`+7`).

@@ -7,7 +7,8 @@ import 'product_detail_screen.dart';
 
 // Search + filter kategori/harga + sort + pagination dummy.
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final String? initialCategoryId;
+  const SearchScreen({super.key, this.initialCategoryId});
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -30,6 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    categoryId = widget.initialCategoryId ?? '';
     _api.getCategories().then((c) => setState(() => cats = c));
     _search();
   }

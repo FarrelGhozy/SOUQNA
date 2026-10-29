@@ -1,0 +1,417 @@
+openapi: 3.1.0
+info:
+  title: SOUQNA API
+  version: 0.8.0-stub
+  description: >
+    Stub OpenAPI M8 dari docs/api-contract.md. Backend belum ada — mock
+    frontend/src/lib/api-client.ts dan flutter/lib/core/api/api_client.dart
+    meniru bentuk request/response ini. Saat backend dimulai, lengkapi
+    examples dan validasi per endpoint tanpa mengubah path.
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Backend lokal (nanti)
+tags:
+  - name: health
+  - name: catalog
+  - name: merchant
+  - name: cart-checkout
+  - name: orders
+  - name: social
+  - name: admin
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Pemeriksaan kesehatan API
+      responses:
+        '200':
+          description: OK
+  /me:
+    get:
+      tags: [health]
+      summary: Profil dan status akun saat ini
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profil }
+        '401': { description: Token invalid }
+    patch:
+      tags: [health]
+      summary: Perbarui nama, kontak, avatar, lokasi default
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profil terperbarui }
+  /categories:
+    get:
+      tags: [catalog]
+      summary: Daftar kategori aktif
+      responses:
+        '200': { description: Array kategori }
+  /products:
+    get:
+      tags: [catalog]
+      summary: Pencarian, filter kategori/harga, sorting, pagination
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: categoryId, in: query, schema: { type: string } }
+        - { name: storeId, in: query, schema: { type: string } }
+        - { name: minPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: maxPrice, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: sort, in: query, schema: { type: string, enum: [terbaru, termurah, termahal, nama] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
+      responses:
+        '200': { description: Paged produk }
+  /products/{productId}:
+    get:
+      tags: [catalog]
+      summary: Detail produk dan variasi
+      parameters:
+        - { name: productId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Produk }
+        '404': { description: Tidak ditemukan }
+  /products/{productId}/reviews:
+    get:
+      tags: [social]
+      summary: Ulasan produk
+      parameters:
+        - { name: productId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Array ulasan }
+  /stores/{storeId}:
+    get:
+      tags: [catalog]
+      summary: Informasi toko aktif
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Toko }
+  /stores/{storeId}/products:
+    get:
+      tags: [catalog]
+      summary: Daftar produk toko
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Array produk }
+  /merchant/store:
+    post:
+      tags: [merchant]
+      summary: Aktivasi merchant dan buat toko (1 akun = 1 toko)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Toko dibuat }
+        '409': { description: Sudah punya toko }
+    get:
+      tags: [merchant]
+      summary: Detail toko sendiri
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Toko }
+    patch:
+      tags: [merchant]
+      summary: Perbarui detail toko dan biaya pengantaran
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Toko terperbarui }
+  /merchant/products:
+    get:
+      tags: [merchant]
+      summary: Daftar produk toko sendiri
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array produk }
+    post:
+      tags: [merchant]
+      summary: Membuat produk (+ minimal 1 variasi)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Produk dibuat }
+  /merchant/products/{productId}:
+    parameters:
+      - { name: productId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [merchant]
+      summary: Detail produk milik sendiri
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Produk }
+    patch:
+      tags: [merchant]
+      summary: Memperbarui produk
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Produk terperbarui }
+    delete:
+      tags: [merchant]
+      summary: Mengarsipkan produk (hidden, snapshot order tetap valid)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Dihapus }
+  /cart:
+    get:
+      tags: [cart-checkout]
+      summary: Isi keranjang
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array cart item }
+  /cart/items:
+    post:
+      tags: [cart-checkout]
+      summary: Tambah variasi + qty (validasi stok/toko/status)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Ditambahkan }
+        '400': { description: Stok habis / toko nonaktif }
+  /cart/items/{itemId}:
+    parameters:
+      - { name: itemId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [cart-checkout]
+      summary: Ubah kuantitas
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Cart terperbarui }
+    delete:
+      tags: [cart-checkout]
+      summary: Hapus item keranjang
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Dihapus }
+  /checkout/validate:
+    post:
+      tags: [cart-checkout]
+      summary: Validasi stok, serah terima, voucher (tanpa mutasi)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Preview per toko }
+        '400': { description: Validasi gagal (atomik) }
+  /checkout:
+    post:
+      tags: [cart-checkout]
+      summary: Buat 1 checkout + N orders, kurangi stok, kosongkan cart
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Checkout + orders }
+        '400': { description: Gagal atomik }
+  /checkouts/{checkoutId}:
+    get:
+      tags: [cart-checkout]
+      summary: Ringkasan checkout multi-merchant
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: checkoutId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Checkout + orders }
+  /orders:
+    get:
+      tags: [orders]
+      summary: Pesanan milik pembeli
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array order }
+  /orders/{orderId}:
+    get:
+      tags: [orders]
+      summary: Detail pesanan (pemilik / merchant toko / admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Order + items + history }
+  /orders/{orderId}/cancel:
+    post:
+      tags: [orders]
+      summary: Batal (hanya saat pending_merchant_confirmation)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Dibatalkan }
+  /orders/{orderId}/confirm-received:
+    post:
+      tags: [orders]
+      summary: Konfirmasi terima (ready/out → received/completed)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Dikonfirmasi }
+  /merchant/orders:
+    get:
+      tags: [orders]
+      summary: Pesanan untuk toko merchant
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array order toko }
+  /merchant/orders/{orderId}/accept:
+    post:
+      tags: [orders]
+      summary: Terima pesanan (pending → accepted)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Diterima }
+  /merchant/orders/{orderId}/reject:
+    post:
+      tags: [orders]
+      summary: Tolak pesanan + kembalikan stok sekali
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Ditolak }
+  /merchant/orders/{orderId}/ready-for-pickup:
+    post:
+      tags: [orders]
+      summary: Siap diambil (accepted + pickup)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Siap diambil }
+  /merchant/orders/{orderId}/out-for-delivery:
+    post:
+      tags: [orders]
+      summary: Sedang diantar (accepted + delivery)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Diantar }
+  /merchant/orders/{orderId}/mark-paid:
+    post:
+      tags: [orders]
+      summary: Tandai COD lunas setelah tunai diterima
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Lunas }
+  /wishlist:
+    get:
+      tags: [social]
+      summary: Wishlist pengguna
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array wishlist }
+  /wishlist/{productId}:
+    parameters:
+      - { name: productId, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [social]
+      summary: Tambah wishlist (unik per user)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Ditambahkan }
+    delete:
+      tags: [social]
+      summary: Hapus wishlist
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Dihapus }
+  /order-items/{orderItemId}/review:
+    post:
+      tags: [social]
+      summary: Ulasan 1 per item, hanya completed milik sendiri
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: orderItemId, in: path, required: true, schema: { type: string } }
+      responses:
+        '201': { description: Ulasan tersimpan }
+  /conversations:
+    get:
+      tags: [social]
+      summary: Daftar thread peserta
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array thread }
+    post:
+      tags: [social]
+      summary: Buat/ambil thread dengan toko
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Thread }
+  /conversations/{conversationId}/messages:
+    parameters:
+      - { name: conversationId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [social]
+      summary: Baca pesan belum kedaluwarsa (>7 hari disembunyikan)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Pesan + hidden count }
+    post:
+      tags: [social]
+      summary: Kirim pesan teks ≤2000 char
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Terkirim }
+  /admin/users:
+    get:
+      tags: [admin]
+      summary: Cari/daftar pengguna
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array user }
+  /admin/categories/{categoryId}:
+    parameters:
+      - { name: categoryId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [admin]
+      summary: Ubah kategori
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Kategori }
+    delete:
+      tags: [admin]
+      summary: Nonaktifkan kategori
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Dinonaktifkan }
+  /admin/products/{productId}/hide:
+    post:
+      tags: [admin]
+      summary: Sembunyikan produk
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: productId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Disembunyikan }
+  /admin/products/{productId}/publish:
+    post:
+      tags: [admin]
+      summary: Publikasikan produk layak
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: productId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Dipublikasikan }
+  /admin/vouchers:
+    get:
+      tags: [admin]
+      summary: Daftar voucher
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array voucher }
+    post:
+      tags: [admin]
+      summary: Buat voucher
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Voucher dibuat }
+  /admin/audit-logs:
+    get:
+      tags: [admin]
+      summary: Jejak administratif
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Array log }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase access_token. Backend validasi + cek profil aktif.

@@ -19,6 +19,10 @@ File root tetap acuan kontrak; folder ini untuk kerja harian agar tidak scroll 1
 | `testing-deploy.md` | Strategi uji + env + risiko | §15, §16, §17, §20 |
 | `frontend-mock.md` | Strategi dummy/mock web (fokus saat ini) | baru |
 | `flutter-mock.md` | Strategi dummy/mock Android (fokus saat ini) | baru |
+| `ERD.md` | ERD final + kolom acuan `db/schema/*` | §8 final M8 |
+| `openapi.yaml` | Stub OpenAPI `/api/v1` dari kontrak (backend menyusul) | §10 stub M8 |
+| `parity-audit.md` | Audit parity web↔Flutter M1–M6 | M8 |
+| `demo-e2e.md` | Skrip demo manual + `./scripts/demo-e2e.sh` | M8 |
 | `../TODO.md` | Checklist kerja aktif (frontend + flutter dummy) | turunan §14 |
 | `../AGENTS.md` | Aturan agen global | turunan §6–§7 |
 

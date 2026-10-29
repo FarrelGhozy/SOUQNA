@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../mocks/categories_mock.dart';
 import '../../mocks/products_mock.dart';
 import '../../mocks/stores_mock.dart';
+import '../../mocks/vouchers_mock.dart';
 
 // Mock-first: Dio terpasang, tapi USE_MOCK=true → kembalikan dummy lokal.
 // Saat backend siap: flip ke false + set baseUrl ke /api/v1.
@@ -620,6 +621,32 @@ class ApiClient {
     _cart.removeWhere((c) => c.id == id);
   }
 
+  // --- Voucher (aturan sama dengan web: aktif, expired, min-subtotal) ---
+  Future<List<VoucherMock>> getVouchers() async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return vouchersMock;
+  }
+
+  /// Kembalikan diskon atau lempar Exception dengan alasan jelas.
+  int voucherAmount(String code, int subtotal) {
+    VoucherMock? v;
+    try {
+      v = vouchersMock.firstWhere((x) => x.code == code.toUpperCase());
+    } catch (_) {}
+    if (v == null || !v.isActive) throw Exception('Voucher tidak ditemukan / nonaktif');
+    final now = DateTime.now().toUtc();
+    if (DateTime.parse(v.startsAt).isAfter(now) || DateTime.parse(v.endsAt).isBefore(now)) {
+      throw Exception('Voucher kedaluwarsa');
+    }
+    if (subtotal < v.minimumSubtotal) throw Exception('Min. belanja ${v.minimumSubtotal}');
+    return v.discountValue > subtotal ? subtotal : v.discountValue;
+  }
+
+  Future<int> validateVoucher(String code, int subtotal) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return voucherAmount(code, subtotal);
+  }
+
   // --- Checkout dummy: hitung server-side, atomik ---
   CheckoutPreview validateCheckout({
     required List<CartLine> items,
@@ -664,14 +691,10 @@ class ApiClient {
     var discount = 0;
     final code = voucherCode?.trim().toUpperCase();
     if (code != null && code.isNotEmpty) {
-      if (code == 'HEMAT5K' && subtotal >= 30000) {
-        discount = 5000;
-      } else if (code == 'KADALUARSA') {
-        errors.add('Voucher: Voucher kedaluwarsa');
-      } else if (code == 'HEMAT5K') {
-        errors.add('Voucher: Min. belanja 30000');
-      } else {
-        errors.add('Voucher: Voucher tidak ditemukan / nonaktif');
+      try {
+        discount = voucherAmount(code, subtotal);
+      } catch (e) {
+        errors.add('Voucher: ${e.toString().replaceFirst('Exception: ', '')}');
       }
     }
     if (errors.isNotEmpty) throw Exception(errors.join(' '));

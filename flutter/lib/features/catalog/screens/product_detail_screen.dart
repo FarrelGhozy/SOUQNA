@@ -103,8 +103,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 8),
         Text('${formatIDR(v.price)} · stok ${v.stock}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ElevatedButton(
-          onPressed: blocked || v.stock == 0 ? null : () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Masuk keranjang (dummy)')));
+          onPressed: blocked || v.stock == 0 ? null : () async {
+            try {
+              await _api.addToCart(v.id, 1);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${prod.name} (${v.label}) masuk keranjang.')));
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(e.toString().replaceFirst('Exception: ', ''))));
+              }
+            }
           },
           child: const Text('+ Keranjang'),
         ),
