@@ -1,58 +1,101 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api-client.js';
 import type { Product, WishlistItem } from '../types/index.js';
+import { ProductCard } from '../components/ProductCard.js';
+import { ProductCardSkeleton } from '../components/ui/Skeleton.js';
+import { Button } from '../components/ui/Button.js';
+import { Alert } from '../components/ui/Alert.js';
+import { EmptyState } from '../components/ui/EmptyState.js';
+import { useToast } from '../components/ui/ToastContext.js';
 
-// Wishlist milik user yang login (unique per produk).
 export function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[]>([]);
-  const [prods, setProds] = useState<Record<string, Product>>({});
+  const [prods, setProds] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const nav = useNavigate();
+  const toast = useToast();
 
   const load = async () => {
-    const w = await api.getWishlist();
-    setItems(w);
-    const map: Record<string, Product> = {};
-    for (const it of w) {
-      const p = await api.getProduct(it.product_id);
-      if (p) map[it.product_id] = p;
+    try {
+      setLoading(true);
+      const w = await api.getWishlist();
+      setItems(w);
+      const pList: Product[] = [];
+      for (const it of w) {
+        const p = await api.getProduct(it.product_id);
+        if (p) pList.push(p);
+      }
+      setProds(pList);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Gagal memuat wishlist.');
+    } finally {
+      setLoading(false);
     }
-    setProds(map);
   };
 
   useEffect(() => {
-    (async () => {
-      try {
-        await load();
-      } catch (e) {
-        setErr(e instanceof Error ? e.message : 'Gagal memuat wishlist.');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    load();
   }, []);
 
-  if (loading) return <p>Memuat wishlist...</p>;
-  if (err) return <p style={{ color: 'red' }}>{err}</p>;
+  const handleRemove = async (productId: string) => {
+    try {
+      await api.removeFromWishlist(productId);
+      toast.info('Item dihapus dari wishlist.');
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Gagal menghapus item.');
+    }
+  };
 
   return (
-    <>
-      <h1>Wishlist saya ({items.length})</h1>
-      {items.length === 0 ? <p>Belum ada favorit. <Link to="/search">Cari produk →</Link></p> : items.map((w) => {
-        const p = prods[w.product_id];
-        return (
-          <div key={w.id} style={{ border: '1px solid #ddd', borderRadius: 8, padding: 8, marginBottom: 8 }}>
-            {p ? <><Link to={`/products/${p.id}`}><b>{p.name}</b></Link> <small>· {p.status}</small></>
-              : <b>{w.product_id}</b>}
-            <div>
-              <button onClick={async () => { await api.removeFromWishlist(w.product_id); await load(); }}>
-                Hapus
-              </button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {/* Header */}
+      <div>
+        <nav aria-label="Breadcrumb" style={{ fontSize: '13px', color: 'var(--muted)', display: 'flex', gap: 8, marginBottom: 'var(--space-2)' }}>
+          <Link to="/">Beranda</Link>
+          <span>/</span>
+          <span style={{ color: 'var(--unida-text)', fontWeight: 600 }}>Wishlist Saya</span>
+        </nav>
+        <h1 style={{ fontSize: '24px', margin: 0 }}>Daftar Keinginan (Wishlist)</h1>
+        <p style={{ color: 'var(--muted)', fontSize: '14px', marginTop: 4 }}>
+          {items.length} produk favorit yang Anda simpan
+        </p>
+      </div>
+
+      {err && <Alert variant="danger">{err}</Alert>}
+
+      {loading ? (
+        <div className="grid-products">
+          {[1, 2, 3, 4].map((i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : prods.length === 0 ? (
+        <EmptyState
+          title="Wishlist Masih Kosong"
+          description="Simpan produk incaran Anda agar mudah ditemukan kembali dan dibeli kapan saja."
+          actionLabel="Telusuri Katalog"
+          onAction={() => nav('/search')}
+        />
+      ) : (
+        <div className="grid-products">
+          {prods.map((p) => (
+            <div key={p.id} style={{ display: 'flex', flexDirection: 'column' }}>
+              <ProductCard p={p} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemove(p.id)}
+                style={{ marginTop: 6, color: 'var(--danger)', fontSize: '12px' }}
+              >
+                ✕ Hapus dari Wishlist
+              </Button>
             </div>
-          </div>
-        );
-      })}
-    </>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

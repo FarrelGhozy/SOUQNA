@@ -280,18 +280,25 @@ const extraOrderItems = (): OrderItem[] => readJSON<OrderItem[]>(OI_KEY, []);
 
 // --- Cart ---
 export interface CartLine { id: string; variant_id: string; quantity: number }
-const CART_KEY = 'souqna:cart';
 const seedCart: CartLine[] = [
   { id: 'cart-1', variant_id: 'var-01a', quantity: 2 },
   { id: 'cart-2', variant_id: 'var-04a', quantity: 1 },
 ];
-function loadCart(): CartLine[] {
-  const raw = readJSON<CartLine[] | null>(CART_KEY, null);
-  if (raw) return raw;
-  writeJSON(CART_KEY, seedCart);
-  return [...seedCart];
+function cartKey(): string {
+  const me = currentSession();
+  return me ? `souqna:cart:${me.id}` : 'souqna:cart:guest';
 }
-function saveCart(c: CartLine[]) { writeJSON(CART_KEY, c); }
+function loadCart(): CartLine[] {
+  const key = cartKey();
+  const raw = readJSON<CartLine[] | null>(key, null);
+  if (raw !== null) return raw;
+  const legacy = readJSON<CartLine[] | null>('souqna:cart', null);
+  const me = currentSession();
+  const initial = (!me || me.id === 'user-buyer-1') ? (legacy ?? seedCart) : [];
+  writeJSON(key, initial);
+  return [...initial];
+}
+function saveCart(c: CartLine[]) { writeJSON(cartKey(), c); }
 
 function resolveVariant(variantId: string) {
   for (const p of allProducts()) {
@@ -714,6 +721,8 @@ export const api = {
     };
     const orders: Order[] = prev.perStore.map((ps, i) => ({
       id: `ord-${Date.now()}-${i}`, checkout_id: checkout.id, store_id: ps.store_id, buyer_id: me.id,
+      buyer_name_snapshot: me.full_name,
+      handover_location_snapshot: input.fulfillment[ps.store_id]?.location || undefined,
       status: 'pending_merchant_confirmation', payment_method: 'cod', payment_status: 'unpaid',
       delivery_method: ps.delivery_method, delivery_fee: ps.delivery_fee,
       subtotal: ps.subtotal, discount_amount: ps.discount_amount, grand_total: ps.grand_total,
@@ -744,18 +753,35 @@ export const api = {
     const all = [...seedCheckouts, ...extraCheckouts()];
     const co = all.find((c) => c.id === id) ?? null;
     if (!co) return { checkout: null, orders: [] as Order[] };
+    const me = currentSession();
+    if (me && me.role !== 'admin' && co.buyer_id !== me.id) {
+      throw new Error('Akses ditolak: checkout ini bukan milik Anda.');
+    }
     const allO = [...seedOrders, ...extraOrders()];
     return { checkout: co, orders: allO.filter((o) => o.checkout_id === id) };
   },
 
   async getOrders() {
     await delay();
-    return allOrders();
+    const me = currentSession();
+    if (!me) return [];
+    if (me.role === 'admin') return allOrders();
+    return allOrders().filter((o) => o.buyer_id === me.id);
   },
   async getOrder(id: string) {
     await delay();
+    const ord = findOrder(id);
+    if (!ord) return { order: null, items: [] as OrderItem[] };
+    const me = currentSession();
+    if (me && me.role !== 'admin') {
+      const isBuyer = ord.buyer_id === me.id;
+      const isStoreOwner = allStores().some((s) => s.id === ord.store_id && s.owner_id === me.id);
+      if (!isBuyer && !isStoreOwner) {
+        throw new Error('Akses ditolak: pesanan ini bukan milik Anda.');
+      }
+    }
     const allI = [...seedOrderItems, ...extraOrderItems()];
-    return { order: findOrder(id), items: allI.filter((i) => i.order_id === id) };
+    return { order: ord, items: allI.filter((i) => i.order_id === id) };
   },
   async getMerchantOrders() {
     await delay();

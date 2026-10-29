@@ -3,41 +3,49 @@ import { Link, useParams } from 'react-router-dom';
 import { api, type OrderAction } from '../lib/api-client.js';
 import { formatDateWIB, formatIDR } from '../lib/format.js';
 import type { MockUser, Order, OrderItem, OrderStatusHistory, Review, Store } from '../types/index.js';
+import { Button } from '../components/ui/Button.js';
+import { OrderStatusBadge, PaymentBadge, DeliveryBadge } from '../components/ui/Badge.js';
+import { Skeleton } from '../components/ui/Skeleton.js';
+import { Alert } from '../components/ui/Alert.js';
+import { useToast } from '../components/ui/ToastContext.js';
 
-// Detail order: aksi kontekstual sesuai peran + histori status.
-// Toast sukses/gagal tampil jelas dan hilang otomatis.
 export function OrderDetailPage() {
   const { orderId } = useParams();
+  const toast = useToast();
+
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [hist, setHist] = useState<OrderStatusHistory[]>([]);
   const [store, setStore] = useState<Store | null>(null);
   const [me, setMe] = useState<MockUser | null>(null);
-  const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   const load = async (id: string) => {
-    const [d, h, m] = await Promise.all([api.getOrder(id), api.getOrderHistory(id), api.getMe()]);
-    if (!d.order) { setErr('Pesanan tidak ditemukan.'); return; }
-    setOrder(d.order);
-    setItems(d.items);
-    setHist(h);
-    setMe(m);
-    setStore(await api.getStore(d.order.store_id));
+    try {
+      setLoading(true);
+      const [d, h, m] = await Promise.all([api.getOrder(id), api.getOrderHistory(id), api.getMe()]);
+      if (!d.order) {
+        setErr('Pesanan tidak ditemukan.');
+        return;
+      }
+      setOrder(d.order);
+      setItems(d.items);
+      setHist(h);
+      setMe(m);
+      setStore(await api.getStore(d.order.store_id));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Gagal memuat pesanan.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (!orderId) return;
-    load(orderId).catch(() => setErr('Gagal memuat pesanan.'));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load(orderId);
   }, [orderId]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   const act = async (a: OrderAction, label: string) => {
     if (!orderId) return;
@@ -46,108 +54,336 @@ export function OrderDetailPage() {
       const o = await api.transitionOrder(orderId, a);
       setOrder(o);
       setHist(await api.getOrderHistory(orderId));
-      setToast({ ok: true, msg: `${label} berhasil.` });
+      toast.success(`${label} berhasil diperbarui.`);
     } catch (e) {
-      setToast({ ok: false, msg: e instanceof Error ? e.message : 'Aksi gagal.' });
+      toast.error(e instanceof Error ? e.message : 'Aksi gagal dilakukan.');
     } finally {
       setBusy(false);
     }
   };
 
-  if (err) return <><Link to="/orders">← Pesanan</Link><p style={{ color: 'red' }}>{err}</p></>;
-  if (!order) return <p>Memuat...</p>;
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 840, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <Skeleton height={140} borderRadius="var(--radius-lg)" />
+        <Skeleton height={200} borderRadius="var(--radius-md)" />
+      </div>
+    );
+  }
+
+  if (err || !order) {
+    return (
+      <div style={{ maxWidth: 840, margin: 'var(--space-6) auto' }}>
+        <Alert variant="danger">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{err || 'Pesanan tidak ditemukan.'}</span>
+            <Link to="/orders">
+              <Button variant="secondary" size="sm">Kembali ke Daftar Pesanan</Button>
+            </Link>
+          </div>
+        </Alert>
+      </div>
+    );
+  }
 
   const isBuyer = me?.id === order.buyer_id;
-  const isMerchant = !!store && store.owner_id === me?.id;
+  const isMerchant = Boolean(store && store.owner_id === me?.id);
   const pending = order.status === 'pending_merchant_confirmation';
   const accepted = order.status === 'accepted';
   const handed = order.status === 'ready_for_pickup' || order.status === 'out_for_delivery';
   const terminal = ['completed', 'rejected', 'cancelled'].includes(order.status);
 
   return (
-    <>
-      <Link to="/orders">← Pesanan</Link>
-      <h1>Order {order.id}</h1>
-      {toast && (
-        <p style={{
-          color: toast.ok ? 'green' : 'red', border: `1px solid ${toast.ok ? 'green' : 'red'}`,
-          borderRadius: 8, padding: 8,
-        }}>{toast.msg}</p>
-      )}
-      <p>Status: <b>{order.status}</b> · Bayar: <b>{order.payment_status}</b> (COD) · {order.delivery_method === 'pickup' ? 'Ambil sendiri' : `Diantar (+${formatIDR(order.delivery_fee)})`}</p>
-      <p>Toko: {store ? <Link to={`/stores/${store.id}`}>{store.name}</Link> : order.store_id} · <small>{formatDateWIB(order.created_at)} WIB</small></p>
-      <p>Subtotal {formatIDR(order.subtotal)} − diskon {formatIDR(order.discount_amount)} + ongkir {formatIDR(order.delivery_fee)} = <b>{formatIDR(order.grand_total)}</b></p>
-      {order.buyer_note && <p><small>Catatan: {order.buyer_note}</small></p>}
+    <div style={{ maxWidth: 840, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" style={{ fontSize: '13px', color: 'var(--muted)', display: 'flex', gap: 8 }}>
+        <Link to="/orders">Daftar Pesanan</Link>
+        <span>/</span>
+        <span style={{ color: 'var(--unida-text)', fontWeight: 600 }}>Rincian {order.id}</span>
+      </nav>
 
-      <h3>Aksi</h3>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {isBuyer && pending && <button disabled={busy} onClick={() => act('cancel', 'Pembatalan')}>Batalkan</button>}
-        {isBuyer && handed && <button disabled={busy} onClick={() => act('confirm-received', 'Konfirmasi terima')}>Saya sudah terima</button>}
-        {isMerchant && pending && <button disabled={busy} onClick={() => act('accept', 'Penerimaan')}>Terima</button>}
-        {isMerchant && pending && <button disabled={busy} onClick={() => act('reject', 'Penolakan')}>Tolak</button>}
-        {isMerchant && accepted && order.delivery_method === 'pickup' && (
-          <button disabled={busy} onClick={() => act('ready-for-pickup', 'Siap diambil')}>Siap diambil</button>)}
-        {isMerchant && accepted && order.delivery_method === 'merchant_delivery' && (
-          <button disabled={busy} onClick={() => act('out-for-delivery', 'Pengantaran')}>Antar sekarang</button>)}
-        {isMerchant && order.payment_status === 'unpaid' && !terminal && (
-          <button disabled={busy} onClick={() => act('mark-paid', 'Tandai lunas')}>Tandai lunas (tunai diterima)</button>)}
-        {!isBuyer && !isMerchant && <small>Bukan pemilik pesanan/toko ini.</small>}
+      {/* Order Main Header Card */}
+      <div className="card" style={{ padding: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 'var(--space-4)' }}>
+          <div>
+            <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: 2 }}>Nomor Pesanan</div>
+            <h1 style={{ fontSize: '24px', margin: 0, color: 'var(--unida-navy)' }}>{order.id}</h1>
+            <div style={{ fontSize: '13px', color: 'var(--muted)', marginTop: 4 }}>
+              Dibuat pada {formatDateWIB(order.created_at)} WIB
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            <OrderStatusBadge status={order.status} />
+            <PaymentBadge status={order.payment_status} />
+          </div>
+        </div>
+
+        {/* Store & Handover Logistics Info */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 'var(--space-4)',
+            paddingTop: 'var(--space-4)',
+            borderTop: '1px solid var(--border)',
+            fontSize: '14px',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--muted)' }}>Toko Penjual:</div>
+            {store ? (
+              <Link to={`/stores/${store.id}`} style={{ fontWeight: 700, color: 'var(--unida-navy)' }}>
+                {store.name}
+              </Link>
+            ) : (
+              <strong>{order.store_id}</strong>
+            )}
+          </div>
+
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--muted)' }}>Metode Penyerahan:</div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 2 }}>
+              <DeliveryBadge method={order.delivery_method} />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: '12px', color: 'var(--muted)' }}>Lokasi / Titik Temu:</div>
+            <strong>
+              {order.handover_location_snapshot || (order.delivery_method === 'pickup' && store?.pickup_location) || 'Gerai toko'}
+            </strong>
+          </div>
+        </div>
+
+        {order.buyer_note && (
+          <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border)', fontSize: '13px' }}>
+            <span style={{ color: 'var(--muted)' }}>Catatan Pembeli: </span>
+            <span style={{ fontStyle: 'italic' }}>"{order.buyer_note}"</span>
+          </div>
+        )}
       </div>
 
-      <h3>Items</h3>
-      {items.length === 0 ? <p><small>Tanpa snapshot item (order seed).</small></p>
-        : items.map((i) => (
-          <div key={i.id}>
-            {i.product_name_snapshot} ({i.variant_options_snapshot}) × {i.quantity} — {formatIDR(i.line_total)}
-            {isBuyer && order.status === 'completed' && <ReviewBox itemId={i.id} />}
+      {/* Contextual Action Buttons */}
+      {(isBuyer || isMerchant) && !terminal && (
+        <div className="card" style={{ padding: 'var(--space-4)', background: 'var(--gold-soft)', border: '1px solid var(--unida-gold)' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--unida-navy)', marginBottom: 'var(--space-2)' }}>
+            Aksi Berikutnya:
           </div>
-        ))}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {/* Buyer actions */}
+            {isBuyer && pending && (
+              <Button variant="danger" size="md" disabled={busy} onClick={() => act('cancel', 'Pembatalan Pesanan')}>
+                Batalkan Pesanan
+              </Button>
+            )}
+            {isBuyer && handed && (
+              <Button variant="primary" size="md" disabled={busy} onClick={() => act('confirm-received', 'Konfirmasi Penerimaan')}>
+                ✓ Saya Sudah Menerima Barang
+              </Button>
+            )}
 
-      <h3>Histori status</h3>
-      {hist.length === 0 ? <p><small>Belum ada histori.</small></p> : hist.map((h) => (
-        <div key={h.id} style={{ borderTop: '1px solid #eee', padding: '4px 0' }}>
-          <small>{formatDateWIB(h.created_at)} WIB</small> — {h.from_status} → <b>{h.to_status}</b>
-          {h.note && <small> · {h.note}</small>}
+            {/* Merchant actions */}
+            {isMerchant && pending && (
+              <>
+                <Button variant="primary" size="md" disabled={busy} onClick={() => act('accept', 'Terima Pesanan')}>
+                  Terima Pesanan
+                </Button>
+                <Button variant="danger" size="md" disabled={busy} onClick={() => act('reject', 'Tolak Pesanan')}>
+                  Tolak Pesanan
+                </Button>
+              </>
+            )}
+            {isMerchant && accepted && order.delivery_method === 'pickup' && (
+              <Button variant="primary" size="md" disabled={busy} onClick={() => act('ready-for-pickup', 'Siap Diambil')}>
+                Tandai Siap Diambil
+              </Button>
+            )}
+            {isMerchant && accepted && order.delivery_method === 'merchant_delivery' && (
+              <Button variant="primary" size="md" disabled={busy} onClick={() => act('out-for-delivery', 'Pengantaran Pesanan')}>
+                Kirim Pesanan Sekarang
+              </Button>
+            )}
+            {isMerchant && order.payment_status === 'unpaid' && (
+              <Button variant="gold" size="md" disabled={busy} onClick={() => act('mark-paid', 'Tandai Lunas COD')}>
+                💰 Konfirmasi Pembayaran Tunai (Lunas)
+              </Button>
+            )}
+          </div>
         </div>
-      ))}
-    </>
+      )}
+
+      {/* Items Section */}
+      <div className="card">
+        <div className="card-header">
+          <h2 style={{ fontSize: '16px', margin: 0 }}>Rincian Barang yang Dipesan</h2>
+        </div>
+        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {items.length === 0 ? (
+            <p style={{ color: 'var(--muted)', fontSize: '13px', margin: 0 }}>
+              (Snapshot item tidak tersedia untuk data pesanan ini).
+            </p>
+          ) : (
+            items.map((i) => (
+              <div
+                key={i.id}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  paddingBottom: 'var(--space-3)',
+                  borderBottom: '1px solid var(--border)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <div>
+                    <strong style={{ fontSize: '15px' }}>{i.product_name_snapshot}</strong>
+                    <div style={{ fontSize: '13px', color: 'var(--muted)', marginTop: 2 }}>
+                      Varian: {i.variant_options_snapshot} · {formatIDR(i.unit_price_snapshot)} × {i.quantity}
+                    </div>
+                  </div>
+                  <strong style={{ color: 'var(--unida-navy)', fontSize: '15px' }}>
+                    {formatIDR(i.line_total)}
+                  </strong>
+                </div>
+
+                {/* Review capability if completed */}
+                {isBuyer && order.status === 'completed' && <ReviewBox itemId={i.id} />}
+              </div>
+            ))
+          )}
+
+          {/* Payment Breakdown */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '14px', paddingTop: 'var(--space-2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--muted)' }}>Subtotal Produk</span>
+              <span>{formatIDR(order.subtotal)}</span>
+            </div>
+            {order.discount_amount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
+                <span>Diskon</span>
+                <span>−{formatIDR(order.discount_amount)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--muted)' }}>Biaya Pengiriman</span>
+              <span>{order.delivery_fee === 0 ? 'Gratis' : formatIDR(order.delivery_fee)}</span>
+            </div>
+            <hr style={{ borderColor: 'var(--border)', margin: '4px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <strong style={{ fontSize: '15px' }}>Total Tagihan COD</strong>
+              <strong style={{ fontSize: '20px', color: 'var(--unida-navy)' }}>
+                {formatIDR(order.grand_total)}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* History Timeline */}
+      <div className="card">
+        <div className="card-header">
+          <h2 style={{ fontSize: '16px', margin: 0 }}>Riwayat Status Pesanan</h2>
+        </div>
+        <div className="card-body">
+          {hist.length === 0 ? (
+            <p style={{ color: 'var(--muted)', fontSize: '13px', margin: 0 }}>Belum ada catatan riwayat status.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              {hist.map((h) => (
+                <div key={h.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      background: 'var(--unida-blue)',
+                      marginTop: 6,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600 }}>
+                      Transisi ke status: <OrderStatusBadge status={h.to_status} />
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: 2 }}>
+                      {formatDateWIB(h.created_at)} WIB {h.note ? `— ${h.note}` : ''}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
-// Ulasan per order-item: hanya bila order completed; 1 ulasan per item.
+// Ulasan Komponen per Item
 function ReviewBox({ itemId }: { itemId: string }) {
   const [review, setReview] = useState<Review | null>(null);
   const [rating, setRating] = useState('5');
   const [text, setText] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     api.getReviewForItem(itemId).then(setReview);
   }, [itemId]);
 
   if (review) {
-    return <div><small>Ulasanmu: {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)} {review.review_text ?? ''}</small></div>;
+    return (
+      <div style={{ background: 'var(--surface-muted)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', marginTop: 4 }}>
+        <div style={{ color: 'var(--warning)', fontSize: '14px', letterSpacing: 1 }}>
+          {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--unida-text)', marginTop: 2 }}>
+          {review.review_text || '(Ulasan bintang saja)'}
+        </div>
+      </div>
+    );
   }
+
+  const handleSubmitReview = async () => {
+    try {
+      setSubmitting(true);
+      const r = await api.createReview(itemId, Number(rating), text.trim() || undefined);
+      setReview(r);
+      toast.success('Ulasan Anda berhasil dikirim!');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Gagal mengirim ulasan.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div style={{ margin: '4px 0 8px 12px' }}>
-      {msg && <small style={{ color: msg.startsWith('ok:') ? 'green' : 'red' }}>{msg}</small>}
-      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-        <select value={rating} onChange={(e) => setRating(e.target.value)}>
-          {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{r} ★</option>)}
+    <div style={{ background: 'var(--surface-muted)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', marginTop: 6 }}>
+      <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: 6 }}>Beri Ulasan Produk:</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select
+          value={rating}
+          onChange={(e) => setRating(e.target.value)}
+          className="form-select"
+          style={{ width: 'auto', minHeight: 36, padding: '4px 10px' }}
+        >
+          <option value="5">★★★★★ (5 Bintang)</option>
+          <option value="4">★★★★☆ (4 Bintang)</option>
+          <option value="3">★★★☆☆ (3 Bintang)</option>
+          <option value="2">★★☆☆☆ (2 Bintang)</option>
+          <option value="1">★☆☆☆☆ (1 Bintang)</option>
         </select>
         <input
-          placeholder="Ulasan (opsional, ≤500 char)" value={text}
-          onChange={(e) => setText(e.target.value)} maxLength={500}
+          placeholder="Tulis ulasan produk..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          maxLength={500}
+          className="form-input"
+          style={{ flex: 1, minWidth: 180, minHeight: 36, padding: '4px 10px' }}
         />
-        <button onClick={async () => {
-          try {
-            const r = await api.createReview(itemId, Number(rating), text);
-            setReview(r);
-            setMsg('ok: Ulasan tersimpan.');
-          } catch (e) {
-            setMsg(e instanceof Error ? e.message : 'Gagal mengulas.');
-          }
-        }}>Kirim ulasan</button>
+        <Button variant="primary" size="sm" loading={submitting} onClick={handleSubmitReview}>
+          Kirim Ulasan
+        </Button>
       </div>
     </div>
   );

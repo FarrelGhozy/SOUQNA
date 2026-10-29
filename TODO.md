@@ -40,20 +40,21 @@ Lihat `docs/implementation-audit.md` untuk gap yang masih ada.
 
 ## M10 — Correctness & web UI
 
-- [ ] Scoping order/cart/ownership mock web+Flutter — issue #11.
-- [ ] Fondasi UI web: token, layout, komponen reusable — issue #12.
-- [ ] Redesign halaman publik & auth web — issue #13.
-- [ ] Redesign halaman akun & transaksi web — issue #14.
-- [ ] Redesign merchant & admin web — issue #15.
-- [ ] Regression check: alur demo M1–M7 tetap lolos setelah redesign.
+- [x] Scoping order/cart/ownership mock web+Flutter — issue #11.
+- [x] Fondasi UI web: token, layout, komponen reusable — issue #12.
+- [x] Redesign halaman publik & auth web — issue #13.
+- [x] Redesign halaman akun & transaksi web — issue #14.
+- [x] Redesign merchant & admin web — issue #15.
+- [x] Regression check: alur demo M1–M7 tetap lolos setelah redesign.
+  Bukti 2026-10-30: `bun run build`, `bunx tsc --noEmit`, `./scripts/demo-e2e.sh` lolos 100%.
 
 ## M11 — Flutter parity & UX
 
-- [ ] Tema & shared components Flutter — issue #16.
-- [ ] Perbaiki persistensi mock auth Flutter — issue #16.
-- [ ] UX states, label status, toast/404/error boundary — issue #17.
-- [ ] Samakan copy dan perilaku web↔Flutter untuk alur inti.
-- [ ] Catat hasil `flutter analyze`/`flutter test` atau blocker SDK.
+- [x] Tema & shared components Flutter — issue #16 (`AppTheme.lightTheme` Biru UNIDA).
+- [x] Perbaiki persistensi mock auth Flutter — issue #16 (JSON snapshot + override profil).
+- [x] UX states, label status, toast/404/error boundary — issue #17 (`NotFoundPage`, `ToastProvider`, skeleton loader, label status Bahasa Indonesia).
+- [x] Samakan copy dan perilaku web↔Flutter untuk alur inti.
+- [x] Catat hasil `flutter analyze`/`flutter test` atau blocker SDK (Flutter SDK belum ada di environment ini; code contract dan parity ID terverifikasi lewat `./scripts/demo-e2e.sh`).
 
 ## M12 — Quality & release
 

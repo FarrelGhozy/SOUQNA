@@ -22,9 +22,35 @@ class MockAuth {
       final sp = await SharedPreferences.getInstance();
       final raw = sp.getString(_key);
       if (raw != null) {
-        // Rekonstruksi ringan: cari di preset/extra, lalu terapkan override.
-        // Format: simpan id + snapshot.
-        session.value = _findById(_idOf(raw));
+        final id = _idOf(raw);
+        var u = _findById(id);
+        if (u == null) {
+          final nameMatch = RegExp(r'"name":"([^"]+)"').firstMatch(raw);
+          final emailMatch = RegExp(r'"email":"([^"]+)"').firstMatch(raw);
+          final roleMatch = RegExp(r'"role":"([^"]+)"').firstMatch(raw);
+          final hasStoreMatch = RegExp(r'"hasStore":(true|false)').firstMatch(raw);
+          final storeIdMatch = RegExp(r'"storeId":"([^"]*)"').firstMatch(raw);
+          if (emailMatch != null) {
+            u = UserMock(
+              id: id,
+              fullName: nameMatch?.group(1) ?? 'User',
+              email: emailMatch.group(1) ?? '',
+              role: roleMatch?.group(1) ?? 'buyer',
+              hasStore: hasStoreMatch?.group(1) == 'true',
+              storeId: storeIdMatch?.group(1)?.isNotEmpty == true ? storeIdMatch?.group(1) : null,
+            );
+          }
+        }
+        if (u != null) {
+          final ov = sp.getString('$_ovKey:${u.id}');
+          if (ov != null) {
+            final parts = ov.split('|');
+            if (parts.isNotEmpty && parts[0].isNotEmpty) u = u.copyWith(fullName: parts[0]);
+            if (parts.length > 1 && parts[1].isNotEmpty) u = u.copyWith(phone: parts[1]);
+            if (parts.length > 2 && parts[2].isNotEmpty) u = u.copyWith(defaultLocation: parts[2]);
+          }
+          session.value = u;
+        }
       }
     } catch (_) {}
   }
@@ -48,7 +74,10 @@ class MockAuth {
       if (s == null) {
         await sp.remove(_key);
       } else {
-        await sp.setString(_key, '{"id":"${s.id}"}');
+        await sp.setString(
+          _key,
+          '{"id":"${s.id}","name":"${s.fullName}","email":"${s.email}","role":"${s.role}","hasStore":${s.hasStore},"storeId":"${s.storeId ?? ''}"}',
+        );
       }
     } catch (_) {}
   }

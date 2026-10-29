@@ -4,9 +4,8 @@ Tanggal: 2026-10-30
 Status: audit awal fase M9. **Tidak ada perubahan code pada fase ini.**
 
 > Catatan status: temuan **D1–D12** pada bagian 2 sudah diperbaiki di fase M9.
-> Temuan **C1–C13** pada bagian 3 adalah gap code yang masih terbuka dan
-> dilacak lewat issue #11–#21. Baris bukti di bawah sengaja mempertahankan
-> nomor baris saat audit dilakukan.
+> Temuan **C1–C9**, **C11**, dan **C12** pada bagian 3 sudah diperbaiki di fase M10–M11 (scoping mock, design token Biru UNIDA Gontor, redesign web, tema Flutter, label status, 404 route, toast UI).
+> Gap code yang tersisa adalah C10 (mock delete admin & reset route) dan C13 (CI & automated testing). Baris bukti di bawah sengaja mempertahankan nomor baris saat audit dilakukan.
 
 Tujuan: memastikan dokumentasi tidak menjanjikan perilaku yang belum ada, dan
 setiap penyimpangan code punya issue perbaikan yang jelas. Baseline

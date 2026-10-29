@@ -22,6 +22,8 @@ export interface Order {
   status: OrderStatus; payment_method: 'cod'; payment_status: 'unpaid' | 'paid';
   delivery_method: 'pickup' | 'merchant_delivery'; delivery_fee: number;
   subtotal: number; discount_amount: number; grand_total: number; buyer_note?: string; created_at: string;
+  handover_location_snapshot?: string;
+  buyer_name_snapshot?: string;
 }
 export interface OrderItem {
   id: string; order_id: string; product_id: string; product_variant_id: string;

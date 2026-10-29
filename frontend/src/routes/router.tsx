@@ -28,6 +28,7 @@ import { AdminProductsPage } from '../pages/AdminProductsPage.js';
 import { AdminOrdersPage } from '../pages/AdminOrdersPage.js';
 import { AdminVouchersPage } from '../pages/AdminVouchersPage.js';
 import { AdminAuditLogsPage } from '../pages/AdminAuditLogsPage.js';
+import { NotFoundPage } from '../pages/NotFoundPage.js';
 import { RequireAuth, RequireMerchant, RequireAdmin } from './guards.js';
 
 export const router = createBrowserRouter([
@@ -84,6 +85,12 @@ export const router = createBrowserRouter([
       { path: '/admin/orders', element: <RequireAdmin><AdminOrdersPage /></RequireAdmin> },
       { path: '/admin/vouchers', element: <RequireAdmin><AdminVouchersPage /></RequireAdmin> },
       { path: '/admin/audit-logs', element: <RequireAdmin><AdminAuditLogsPage /></RequireAdmin> },
+    ],
+  },
+  {
+    element: <PublicLayout />,
+    children: [
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]);

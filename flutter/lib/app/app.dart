@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../shared/theme/app_theme.dart';
 import 'bottom_nav.dart';
 
 class SouqnaApp extends StatelessWidget {
@@ -7,7 +8,8 @@ class SouqnaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'SOUQNA',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.green),
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
       home: const BottomNav(),
     );
   }

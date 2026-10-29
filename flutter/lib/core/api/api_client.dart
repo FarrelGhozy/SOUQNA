@@ -117,12 +117,14 @@ class OrderMock {
   final int discount;
   final List<OrderItemMock> items;
   final List<HistoryMock> history;
+  final String? handoverLocation;
   bool stockReturned = false;
   OrderMock({
     required this.id, required this.storeId, required this.storeName,
     required this.buyerId, required this.status, required this.paymentStatus,
     required this.method, required this.deliveryFee, required this.subtotal,
     required this.discount, required this.items, required this.history,
+    this.handoverLocation,
   });
   int get grandTotal => subtotal - discount + deliveryFee;
 }
@@ -793,9 +795,12 @@ class ApiClient {
         HistoryMock('ready_for_pickup', 'completed', 'Diterima + lunas.')]),
   ];
 
-  Future<List<OrderMock>> getOrders() async {
+  Future<List<OrderMock>> getOrders({String? buyerId}) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final list = _orders.toList();
+    var list = _orders.toList();
+    if (buyerId != null && buyerId.isNotEmpty) {
+      list = list.where((o) => o.buyerId == buyerId).toList();
+    }
     list.sort((a, b) => b.id.compareTo(a.id));
     return list;
   }
