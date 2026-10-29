@@ -7,7 +7,7 @@ import {
   checkouts as seedCheckouts, conversations, messages, orders as seedOrders,
   orderItems as seedOrderItems, reviews, users, vouchers, wishlist,
 } from '../mocks/extras.mock.js';
-import type { Checkout, Order, OrderItem, OrderStatusHistory, Product, ProductVariant, Store } from '../types/index.js';
+import type { Checkout, Conversation, Message, Order, OrderItem, OrderStatusHistory, Product, ProductVariant, Review, Store, WishlistItem } from '../types/index.js';
 import { delay } from './format.js';
 import { attachStore, currentSession, updateProfile } from './mock-auth.js';
 
@@ -118,6 +118,56 @@ function persistProduct(p: Product) {
   else saveExtraProducts();
 }
 applyProductOverrides();
+
+// --- Wishlist/chat/review dummy: seed + extra (localStorage) ---
+const WL_KEY = 'souqna:wishlist';
+const WL_DEL_KEY = 'souqna:wishlist-deleted';
+const CONV_KEY = 'souqna:extra-conversations';
+const MSG_KEY = 'souqna:extra-messages';
+const REV_KEY = 'souqna:extra-reviews';
+
+let extraWishlistCache: WishlistItem[] | null = null;
+let extraConvCache: Conversation[] | null = null;
+let extraMsgCache: Message[] | null = null;
+let extraRevCache: Review[] | null = null;
+function extraWishlist(): WishlistItem[] {
+  if (!extraWishlistCache) extraWishlistCache = readJSON<WishlistItem[]>(WL_KEY, []);
+  return extraWishlistCache;
+}
+function saveWishlist() { writeJSON(WL_KEY, extraWishlist()); }
+function allWishlist(): WishlistItem[] {
+  const tomb = new Set(readJSON<string[]>(WL_DEL_KEY, []));
+  return [...wishlist.filter((w) => !tomb.has(w.id)), ...extraWishlist()];
+}
+function extraConversations(): Conversation[] {
+  if (!extraConvCache) extraConvCache = readJSON<Conversation[]>(CONV_KEY, []);
+  return extraConvCache;
+}
+function saveConversations() { writeJSON(CONV_KEY, extraConversations()); }
+function allConversations(): Conversation[] {
+  return [...conversations, ...extraConversations()];
+}
+function extraMessages(): Message[] {
+  if (!extraMsgCache) extraMsgCache = readJSON<Message[]>(MSG_KEY, []);
+  return extraMsgCache;
+}
+function saveMessages() { writeJSON(MSG_KEY, extraMessages()); }
+function allMessages(): Message[] {
+  return [...messages, ...extraMessages()];
+}
+function extraReviews(): Review[] {
+  if (!extraRevCache) extraRevCache = readJSON<Review[]>(REV_KEY, []);
+  return extraRevCache;
+}
+function saveReviews() { writeJSON(REV_KEY, extraReviews()); }
+function allReviews(): Review[] {
+  return [...reviews, ...extraReviews()];
+}
+function isParticipant(conv: Conversation, userId: string): boolean {
+  if (conv.buyer_id === userId) return true;
+  const st = allStores().find((s) => s.id === conv.store_id);
+  return !!st && st.owner_id === userId;
+}
 
 // --- Stok dummy: override persist agar pengurangan stok selamat reload ---
 const STOCK_KEY = 'souqna:stock-overrides';
@@ -869,15 +919,152 @@ export const api = {
     saveExtraProducts();
     return { ...v };
   },
-  async getWishlist() { await delay(); return wishlist; },
-  async getConversations() { await delay(); return conversations; },
-  async getMessages(convId: string) {
-    await delay();
-    // Simulasi purge: sembunyikan pesan >7 hari.
-    const cutoff = Date.now() - 7 * 86400000;
-    return messages.filter((m) => m.conversation_id === convId && new Date(m.created_at).getTime() >= cutoff);
+  // --- Wishlist per user (unique), wajib login ---
+  async getWishlist(): Promise<WishlistItem[]> {
+    await delay(150);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login untuk membuka wishlist.');
+    return allWishlist().filter((w) => w.user_id === me.id)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
-  async getReviews(productId: string) { await delay(); return reviews.filter((r) => r.product_id === productId); },
+  async isWishlisted(productId: string): Promise<boolean> {
+    await delay(100);
+    const me = currentSession();
+    if (!me) return false;
+    return allWishlist().some((w) => w.user_id === me.id && w.product_id === productId);
+  },
+  async addToWishlist(productId: string): Promise<WishlistItem[]> {
+    await delay(200);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login untuk menyimpan wishlist.');
+    const p = allProducts().find((x) => x.id === productId);
+    if (!p) throw new Error('Produk tidak ditemukan.');
+    const st = allStores().find((x) => x.id === p.store_id);
+    if (p.status !== 'published' || !st || st.status !== 'active')
+      throw new Error('Produk tidak tersedia untuk wishlist.');
+    if (allWishlist().some((w) => w.user_id === me.id && w.product_id === productId))
+      throw new Error('Sudah ada di wishlist.');
+    extraWishlist().push({
+      id: `w-${Date.now()}`, user_id: me.id, product_id: productId,
+      created_at: new Date().toISOString(),
+    });
+    saveWishlist();
+    return allWishlist().filter((w) => w.user_id === me.id);
+  },
+  async removeFromWishlist(productId: string): Promise<WishlistItem[]> {
+    await delay(200);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login.');
+    const wl = extraWishlist();
+    const i = wl.findIndex((w) => w.user_id === me.id && w.product_id === productId);
+    if (i >= 0) {
+      wl.splice(i, 1);
+      saveWishlist();
+    } else if (wishlist.some((w) => w.user_id === me.id && w.product_id === productId)) {
+      // Seed bersifat read-only: catat tombstone agar hapus persist.
+      const tomb = readJSON<string[]>(WL_DEL_KEY, []);
+      const seed = wishlist.find((w) => w.user_id === me.id && w.product_id === productId)!;
+      if (!tomb.includes(seed.id)) {
+        tomb.push(seed.id);
+        writeJSON(WL_DEL_KEY, tomb);
+      }
+    }
+    return allWishlist().filter((w) => w.user_id === me.id);
+  },
+
+  // --- Chat teks per toko (wajib login; purge >7 hari disimulasikan) ---
+  async getConversations(): Promise<Conversation[]> {
+    await delay(150);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login untuk membuka chat.');
+    const mineStores = new Set(allStores().filter((s) => s.owner_id === me.id).map((s) => s.id));
+    return allConversations().filter((c) => c.buyer_id === me.id || mineStores.has(c.store_id))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+  async getOrCreateConversation(storeId: string): Promise<Conversation> {
+    await delay(200);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login untuk chat.');
+    const st = allStores().find((x) => x.id === storeId);
+    if (!st) throw new Error('Toko tidak ditemukan.');
+    const ex = allConversations().find((c) => c.buyer_id === me.id && c.store_id === storeId);
+    if (ex) return ex;
+    const c: Conversation = {
+      id: `conv-${Date.now()}`, buyer_id: me.id, store_id: storeId,
+      created_at: new Date().toISOString(),
+    };
+    extraConversations().push(c);
+    saveConversations();
+    return c;
+  },
+  async getMessages(convId: string): Promise<{ messages: Message[]; hidden: number }> {
+    await delay(150);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login.');
+    const conv = allConversations().find((c) => c.id === convId);
+    if (!conv) throw new Error('Thread tidak ditemukan.');
+    if (!isParticipant(conv, me.id)) throw new Error('Bukan peserta thread ini.');
+    // Simulasi purge: pesan >7 hari disembunyikan, thread tetap ada.
+    const cutoff = Date.now() - 7 * 86400000;
+    const all = allMessages()
+      .filter((m) => m.conversation_id === convId)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const visible = all.filter((m) => new Date(m.created_at).getTime() >= cutoff);
+    return { messages: visible, hidden: all.length - visible.length };
+  },
+  async sendMessage(convId: string, body: string): Promise<Message> {
+    await delay(200);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login.');
+    const conv = allConversations().find((c) => c.id === convId);
+    if (!conv) throw new Error('Thread tidak ditemukan.');
+    if (!isParticipant(conv, me.id)) throw new Error('Bukan peserta thread ini.');
+    const text = body.trim();
+    if (!text) throw new Error('Pesan tidak boleh kosong.');
+    if (text.length > 2000) throw new Error('Pesan maksimal 2000 karakter.');
+    const m: Message = {
+      id: `m-${Date.now()}`, conversation_id: convId, sender_id: me.id,
+      body: text, created_at: new Date().toISOString(),
+    };
+    extraMessages().push(m);
+    saveMessages();
+    return m;
+  },
+
+  // --- Ulasan: hanya order-item completed milik sendiri, 1 per item ---
+  async getReviews(productId: string) {
+    await delay();
+    return allReviews().filter((r) => r.product_id === productId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+  async getReviewForItem(orderItemId: string): Promise<Review | null> {
+    await delay(100);
+    return allReviews().find((r) => r.order_item_id === orderItemId) ?? null;
+  },
+  async createReview(orderItemId: string, rating: number, reviewText?: string): Promise<Review> {
+    await delay(250);
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login untuk memberi ulasan.');
+    const item = [...seedOrderItems, ...extraOrderItems()].find((i) => i.id === orderItemId);
+    if (!item) throw new Error('Item pesanan tidak ditemukan.');
+    const order = findOrder(item.order_id);
+    if (!order || order.buyer_id !== me.id) throw new Error('Hanya item milikmu yang bisa diulas.');
+    if (order.status !== 'completed') throw new Error('Ulasan hanya untuk pesanan selesai (completed).');
+    if (allReviews().some((r) => r.order_item_id === orderItemId))
+      throw new Error('Sudah memberi ulasan untuk item ini (1 ulasan per item).');
+    const rate = Math.floor(Number(rating));
+    if (!Number.isFinite(rate) || rate < 1 || rate > 5) throw new Error('Rating 1–5.');
+    const text = reviewText?.trim() ?? '';
+    if (text.length > 500) throw new Error('Ulasan maksimal 500 karakter.');
+    const r: Review = {
+      id: `r-${Date.now()}`, order_item_id: orderItemId, product_id: item.product_id,
+      buyer_id: me.id, rating: rate, ...(text ? { review_text: text } : {}),
+      created_at: new Date().toISOString(),
+    };
+    extraReviews().push(r);
+    saveReviews();
+    return r;
+  },
   async getVouchers() { await delay(); return vouchers; },
   async validateVoucher(code: string, subtotal: number) {
     await delay(200);

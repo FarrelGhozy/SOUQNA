@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
+import '../../../core/auth/mock_auth.dart';
 import '../../../core/utils/date_id.dart';
 import '../../../core/utils/money.dart';
 import '../../../mocks/products_mock.dart';
 import '../../../mocks/stores_mock.dart';
+import '../../chat/screens/thread_screen.dart';
 
 // Detail produk: varian, harga/stok per varian, label habis, fallback gambar.
 class ProductDetailScreen extends StatefulWidget {
@@ -15,10 +17,13 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final _api = ApiClient();
+  final _auth = MockAuth.instance;
   bool loading = true;
   String? error;
   ProductMock? p;
   StoreMock? store;
+  List<ReviewMock> reviews = [];
+  bool wished = false;
   int sel = 0;
 
   @override
@@ -33,7 +38,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final prod = await _api.getProduct(widget.productId);
       if (prod == null) { setState(() => error = 'Produk tidak ditemukan.'); return; }
       final s = await _api.getStore(prod.storeId);
-      setState(() { p = prod; store = s; sel = 0; });
+      final r = await _api.getReviews(prod.id);
+      final uid = _auth.session.value?.id ?? '';
+      final w = uid.isEmpty ? false : await _api.isWishlisted(uid, prod.id);
+      setState(() { p = prod; store = s; reviews = r; wished = w; sel = 0; });
     } catch (_) {
       setState(() => error = 'Gagal memuat produk. Coba lagi.');
     } finally {
@@ -100,6 +108,72 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           },
           child: const Text('+ Keranjang'),
         ),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              icon: Icon(wished ? Icons.favorite : Icons.favorite_border),
+              label: Text(wished ? 'Di wishlist' : 'Wishlist'),
+              onPressed: () async {
+                final uid = _auth.session.value?.id ?? '';
+                if (uid.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Masuk dulu untuk menyimpan wishlist.')));
+                  return;
+                }
+                try {
+                  if (wished) {
+                    await _api.removeFromWishlist(uid, prod.id);
+                    setState(() => wished = false);
+                  } else {
+                    await _api.addToWishlist(uid, prod.id);
+                    setState(() => wished = true);
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(e.toString().replaceFirst('Exception: ', ''))));
+                  }
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.chat_bubble_outline),
+              label: const Text('Chat toko'),
+              onPressed: () async {
+                final uid = _auth.session.value?.id ?? '';
+                if (uid.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Masuk dulu untuk chat.')));
+                  return;
+                }
+                try {
+                  final c = await _api.getOrCreateConversation(uid, prod.storeId);
+                  if (context.mounted) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => ThreadScreen(convId: c.id)));
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(e.toString().replaceFirst('Exception: ', ''))));
+                  }
+                }
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text('Ulasan (${reviews.length})',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        if (reviews.isEmpty)
+          const Text('Belum ada ulasan.', style: TextStyle(color: Colors.grey)),
+        for (final r in reviews)
+          ListTile(
+            dense: true,
+            title: Text('${'★' * r.rating}${'☆' * (5 - r.rating)}'),
+            subtitle: Text(r.text.isEmpty ? '-' : r.text),
+          ),
       ],
     );
   }

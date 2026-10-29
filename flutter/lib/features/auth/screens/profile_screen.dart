@@ -4,6 +4,8 @@ import '../../merchant/screens/become_merchant_screen.dart';
 import '../../merchant/screens/merchant_dashboard_screen.dart';
 import '../../merchant/screens/product_list_screen.dart';
 import '../../merchant/screens/store_profile_screen.dart';
+import '../../wishlist/screens/wishlist_screen.dart';
+import '../../chat/screens/chat_list_screen.dart';
 import '../../orders/screens/merchant_orders_screen.dart';
 
 // Profil: edit nama/telepon/lokasi, logout. Data sesi via MockAuth.
@@ -62,6 +64,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Text(saving ? 'Menyimpan...' : 'Simpan'),
             ),
             const Divider(height: 32),
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const WishlistScreen())),
+              child: const Text('Wishlist saya'),
+            ),
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const ChatListScreen())),
+              child: const Text('Chat'),
+            ),
             OutlinedButton(onPressed: () => _auth.logout(), child: const Text('Keluar')),
             if (s.hasStore) ...[
               const SizedBox(height: 8),

@@ -90,7 +90,10 @@ class OrderItemMock {
   final String variant;
   final int qty;
   final int total;
-  const OrderItemMock(this.name, this.variant, this.qty, this.total);
+  final String id;
+  final String productId;
+  const OrderItemMock(this.name, this.variant, this.qty, this.total,
+      {this.id = '', this.productId = ''});
 }
 
 class HistoryMock {
@@ -121,6 +124,45 @@ class OrderMock {
     required this.discount, required this.items, required this.history,
   });
   int get grandTotal => subtotal - discount + deliveryFee;
+}
+
+// --- Wishlist/review/chat dummy (aturan sama dengan web) ---
+class ReviewMock {
+  final String id;
+  final String orderItemId;
+  final String productId;
+  final String buyerId;
+  final int rating;
+  final String text;
+  final String createdAt;
+  const ReviewMock({
+    required this.id, required this.orderItemId, required this.productId,
+    required this.buyerId, required this.rating, required this.text,
+    required this.createdAt,
+  });
+}
+
+class ConversationMock {
+  final String id;
+  final String buyerId;
+  final String storeId;
+  final String createdAt;
+  const ConversationMock({
+    required this.id, required this.buyerId,
+    required this.storeId, required this.createdAt,
+  });
+}
+
+class MessageMock {
+  final String id;
+  final String conversationId;
+  final String senderId;
+  final String body;
+  final String createdAt;
+  const MessageMock({
+    required this.id, required this.conversationId, required this.senderId,
+    required this.body, required this.createdAt,
+  });
 }
 
 class ApiClient {
@@ -675,14 +717,25 @@ class ApiClient {
       id: 'ord-${DateTime.now().millisecondsSinceEpoch}-${ps.storeId}',
       storeId: ps.storeId, storeName: ps.storeName,
       grandTotal: ps.total, method: ps.method)).toList();
-    // Simpan order penuh untuk layar Pesanan (M4).
+    // Simpan order penuh untuk layar Pesanan (M4), termasuk item (untuk M6 review).
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
     for (final ps in prev.perStore) {
+      final its = <OrderItemMock>[];
+      for (final l in _cart.where((c) {
+        final r = _resolve(c.variantId);
+        return r != null && r.p.storeId == ps.storeId;
+      })) {
+        final r = _resolve(l.variantId)!;
+        its.add(OrderItemMock(r.p.name, r.v.label, l.quantity,
+            r.v.price * l.quantity,
+            id: 'oi-$nowMs-${l.variantId}', productId: r.p.id));
+      }
       _orders.add(OrderMock(
-        id: 'ord-${DateTime.now().millisecondsSinceEpoch}-${ps.storeId}',
+        id: 'ord-$nowMs-${ps.storeId}',
         storeId: ps.storeId, storeName: ps.storeName, buyerId: _buyer,
         status: 'pending_merchant_confirmation', paymentStatus: 'unpaid',
         method: ps.method, deliveryFee: ps.deliveryFee,
-        subtotal: ps.subtotal, discount: ps.discount, items: const [],
+        subtotal: ps.subtotal, discount: ps.discount, items: its,
         history: const [HistoryMock('created', 'pending_merchant_confirmation', 'Checkout dibuat.')],
       ));
     }
@@ -710,7 +763,7 @@ class ApiClient {
       buyerId: _buyer, status: 'completed', paymentStatus: 'paid',
       method: FulfillmentMethod.pickup, deliveryFee: 0,
       subtotal: 25000, discount: 0,
-      items: const [OrderItemMock('Jilid Softcover Skripsi', 'Standar', 1, 25000)],
+      items: const [OrderItemMock('Jilid Softcover Skripsi', 'Standar', 1, 25000, id: 'oi-01', productId: 'prod-08')],
       history: const [HistoryMock('created', 'pending_merchant_confirmation'),
         HistoryMock('pending_merchant_confirmation', 'accepted'),
         HistoryMock('accepted', 'ready_for_pickup'),
@@ -801,5 +854,243 @@ class ApiClient {
     }
     o.history.add(HistoryMock(from, o.status));
     return o;
+  }
+
+  // --- Wishlist per user (unique), wajib login (dijaga UI guard) ---
+  static final Map<String, Set<String>> _wishlist = {
+    'user-buyer-1': {'prod-04'},
+  };
+
+  Future<List<ProductMock>> getWishlist(String userId) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    final ids = _wishlist[userId] ?? const <String>{};
+    return _allProducts().where((p) => ids.contains(p.id)).toList();
+  }
+
+  Future<bool> isWishlisted(String userId, String productId) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return _wishlist[userId]?.contains(productId) ?? false;
+  }
+
+  Future<void> addToWishlist(String userId, String productId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (userId.isEmpty) throw Exception('Wajib login untuk menyimpan wishlist.');
+    ProductMock? p;
+    try {
+      p = _allProducts().firstWhere((e) => e.id == productId);
+    } catch (_) {}
+    if (p == null) throw Exception('Produk tidak ditemukan.');
+    StoreMock? st;
+    try {
+      st = _allStores().firstWhere((e) => e.id == p!.storeId);
+    } catch (_) {}
+    if (p.status != 'published' || st == null || st.status != 'active') {
+      throw Exception('Produk tidak tersedia untuk wishlist.');
+    }
+    final set = _wishlist.putIfAbsent(userId, () => <String>{});
+    if (!set.add(productId)) throw Exception('Sudah ada di wishlist.');
+  }
+
+  Future<void> removeFromWishlist(String userId, String productId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (userId.isEmpty) throw Exception('Wajib login.');
+    _wishlist[userId]?.remove(productId);
+  }
+
+  // --- Ulasan: hanya order-item completed milik sendiri, 1 per item ---
+  static final List<ReviewMock> _reviews = [
+    ReviewMock(
+        id: 'r-1',
+        orderItemId: 'oi-01',
+        productId: 'prod-08',
+        buyerId: _buyer,
+        rating: 5,
+        text: 'Jilid rapi, cepat!',
+        createdAt:
+            DateTime.now().subtract(const Duration(hours: 5)).toIso8601String()),
+  ];
+
+  Future<List<ReviewMock>> getReviews(String productId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final list = _reviews.where((r) => r.productId == productId).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  Future<ReviewMock?> getReviewForItem(String orderItemId) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    try {
+      return _reviews.firstWhere((r) => r.orderItemId == orderItemId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<ReviewMock> createReview({
+    required String buyerId,
+    required String orderItemId,
+    required int rating,
+    String text = '',
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    if (buyerId.isEmpty) throw Exception('Wajib login untuk memberi ulasan.');
+    OrderMock? owner;
+    OrderItemMock? item;
+    for (final o in _orders) {
+      for (final it in o.items) {
+        if (it.id == orderItemId) {
+          owner = o;
+          item = it;
+        }
+      }
+    }
+    if (owner == null || item == null) {
+      throw Exception('Item pesanan tidak ditemukan.');
+    }
+    if (owner.buyerId != buyerId) {
+      throw Exception('Hanya item milikmu yang bisa diulas.');
+    }
+    if (owner.status != 'completed') {
+      throw Exception('Ulasan hanya untuk pesanan selesai (completed).');
+    }
+    if (_reviews.any((r) => r.orderItemId == orderItemId)) {
+      throw Exception('Sudah memberi ulasan untuk item ini (1 ulasan per item).');
+    }
+    if (rating < 1 || rating > 5) throw Exception('Rating 1–5.');
+    if (text.trim().length > 500) {
+      throw Exception('Ulasan maksimal 500 karakter.');
+    }
+    final r = ReviewMock(
+      id: 'r-${DateTime.now().millisecondsSinceEpoch}',
+      orderItemId: orderItemId,
+      productId: item.productId,
+      buyerId: buyerId,
+      rating: rating,
+      text: text.trim(),
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    _reviews.add(r);
+    return r;
+  }
+
+  // --- Chat teks per toko (pesan >7 hari disembunyikan, thread tetap ada) ---
+  static final List<ConversationMock> _convs = [
+    ConversationMock(
+        id: 'conv-01',
+        buyerId: _buyer,
+        storeId: 'store-01',
+        createdAt: DateTime.now()
+            .subtract(const Duration(days: 2))
+            .toIso8601String()),
+  ];
+  static final List<MessageMock> _msgs = [
+    MessageMock(
+        id: 'm-1',
+        conversationId: 'conv-01',
+        senderId: _buyer,
+        body: 'Kak, geprek level 1 masih ada?',
+        createdAt: DateTime.now()
+            .subtract(const Duration(days: 1))
+            .toIso8601String()),
+    MessageMock(
+        id: 'm-2',
+        conversationId: 'conv-01',
+        senderId: 'user-merchant-1',
+        body: 'Ada kak, ready. Mau diantar atau ambil?',
+        createdAt: DateTime.now()
+            .subtract(const Duration(days: 1))
+            .add(const Duration(minutes: 1))
+            .toIso8601String()),
+    MessageMock(
+        id: 'm-3',
+        conversationId: 'conv-01',
+        senderId: _buyer,
+        body: 'Pesan lama (simulasi >7 hari, harus disembunyikan UI)',
+        createdAt: DateTime.now()
+            .subtract(const Duration(days: 8))
+            .toIso8601String()),
+  ];
+
+  bool _isParticipant(
+      ConversationMock c, String userId, Set<String> storeIds) {
+    return c.buyerId == userId || storeIds.contains(c.storeId);
+  }
+
+  Future<List<ConversationMock>> getConversations(
+      String userId, Set<String> storeIds) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    if (userId.isEmpty) throw Exception('Wajib login untuk membuka chat.');
+    return _convs
+        .where((c) => _isParticipant(c, userId, storeIds))
+        .toList();
+  }
+
+  Future<ConversationMock> getOrCreateConversation(
+      String buyerId, String storeId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (buyerId.isEmpty) throw Exception('Wajib login untuk chat.');
+    if (_allStores().every((s) => s.id != storeId)) {
+      throw Exception('Toko tidak ditemukan.');
+    }
+    for (final c in _convs) {
+      if (c.buyerId == buyerId && c.storeId == storeId) return c;
+    }
+    final c = ConversationMock(
+      id: 'conv-${DateTime.now().millisecondsSinceEpoch}',
+      buyerId: buyerId,
+      storeId: storeId,
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    _convs.add(c);
+    return c;
+  }
+
+  Future<({List<MessageMock> messages, int hidden})> getMessages(
+      String convId, String userId, Set<String> storeIds) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    if (userId.isEmpty) throw Exception('Wajib login.');
+    ConversationMock? conv;
+    try {
+      conv = _convs.firstWhere((c) => c.id == convId);
+    } catch (_) {}
+    if (conv == null) throw Exception('Thread tidak ditemukan.');
+    if (!_isParticipant(conv, userId, storeIds)) {
+      throw Exception('Bukan peserta thread ini.');
+    }
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    final all = _msgs.where((m) => m.conversationId == convId).toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final visible = all
+        .where((m) => DateTime.parse(m.createdAt).isAfter(cutoff))
+        .toList();
+    return (messages: visible, hidden: all.length - visible.length);
+  }
+
+  Future<MessageMock> sendMessage(String convId, String senderId,
+      Set<String> storeIds, String body) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (senderId.isEmpty) throw Exception('Wajib login.');
+    ConversationMock? conv;
+    try {
+      conv = _convs.firstWhere((c) => c.id == convId);
+    } catch (_) {}
+    if (conv == null) throw Exception('Thread tidak ditemukan.');
+    if (!_isParticipant(conv, senderId, storeIds)) {
+      throw Exception('Bukan peserta thread ini.');
+    }
+    final text = body.trim();
+    if (text.isEmpty) throw Exception('Pesan tidak boleh kosong.');
+    if (text.length > 2000) {
+      throw Exception('Pesan maksimal 2000 karakter.');
+    }
+    final m = MessageMock(
+      id: 'm-${DateTime.now().millisecondsSinceEpoch}',
+      conversationId: convId,
+      senderId: senderId,
+      body: text,
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    _msgs.add(m);
+    return m;
   }
 }

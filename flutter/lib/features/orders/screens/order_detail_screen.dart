@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
+import '../../../core/auth/mock_auth.dart';
 import '../../../core/utils/money.dart';
 
 // Detail order: aksi kontekstual + histori. Toast jelas saat ilegal.
@@ -13,6 +14,7 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final _api = ApiClient();
+  final _auth = MockAuth.instance;
   bool loading = true;
   bool busy = false;
   String? err;
@@ -107,10 +109,97 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         const SizedBox(height: 8),
         const Text('Items', style: TextStyle(fontWeight: FontWeight.bold)),
         if (order.items.isEmpty) const Text('Tanpa snapshot item (order seed).', style: TextStyle(color: Colors.grey)),
-        for (final it in order.items) Text('${it.name} (${it.variant}) × ${it.qty} — ${formatIDR(it.total)}'),
+        for (final it in order.items)
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${it.name} (${it.variant}) × ${it.qty} — ${formatIDR(it.total)}'),
+            if (!widget.isMerchant && order.status == 'completed' && it.id.isNotEmpty)
+              _ReviewBox(
+                  api: _api,
+                  buyerId: _auth.session.value?.id ?? '',
+                  itemId: it.id),
+          ]),
         const SizedBox(height: 8),
         const Text('Histori status', style: TextStyle(fontWeight: FontWeight.bold)),
         for (final h in order.history) Text('${h.from} → ${h.to}${h.note != null ? ' · ${h.note}' : ''}'),
+      ],
+    );
+  }
+}
+
+// Ulasan per order-item: hanya bila order completed; 1 per item.
+class _ReviewBox extends StatefulWidget {
+  final ApiClient api;
+  final String buyerId;
+  final String itemId;
+  const _ReviewBox(
+      {required this.api, required this.buyerId, required this.itemId});
+  @override
+  State<_ReviewBox> createState() => _ReviewBoxState();
+}
+
+class _ReviewBoxState extends State<_ReviewBox> {
+  ReviewMock? review;
+  int rating = 5;
+  final _text = TextEditingController();
+  bool done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.api.getReviewForItem(widget.itemId).then((r) {
+      if (mounted) setState(() => review = r);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (review != null) {
+      return Text(
+          'Ulasanmu: ${'★' * review!.rating}${'☆' * (5 - review!.rating)} ${review!.text}',
+          style: const TextStyle(color: Colors.grey, fontSize: 12));
+    }
+    if (done) return const SizedBox.shrink();
+    return Row(
+      children: [
+        DropdownButton<int>(
+          value: rating,
+          items: [for (var i = 5; i >= 1; i--) DropdownMenuItem(value: i, child: Text('$i ★'))],
+          onChanged: (v) => setState(() => rating = v ?? 5),
+        ),
+        Expanded(
+          child: TextField(
+              controller: _text,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                  hintText: 'Ulasan (opsional)', counterText: '')),
+        ),
+        IconButton(
+          icon: const Icon(Icons.send),
+          onPressed: () async {
+            try {
+              final r = await widget.api.createReview(
+                buyerId: widget.buyerId,
+                orderItemId: widget.itemId,
+                rating: rating,
+                text: _text.text,
+              );
+              setState(() {
+                review = r;
+                done = true;
+              });
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Ulasan tersimpan.')));
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content:
+                        Text(e.toString().replaceFirst('Exception: ', ''))));
+              }
+            }
+          },
+        ),
       ],
     );
   }

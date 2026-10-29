@@ -48,9 +48,9 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M6 — Wishlist, review, chat dummy · issue #6
 
-- [ ] Wishlist per user (unique), minta login
-- [ ] Review hanya order-item completed milik sendiri, 1 per item, rating 1–5
-- [ ] Chat teks per toko, pesan >7 hari disembunyikan (simulasi purge), thread tetap ada
+- [x] Wishlist per user (unique), minta login
+- [x] Review hanya order-item completed milik sendiri, 1 per item, rating 1–5
+- [x] Chat teks per toko, pesan >7 hari disembunyikan (simulasi purge), thread tetap ada
 
 ## M7 — Admin UI (web prioritas) · issue #7
 

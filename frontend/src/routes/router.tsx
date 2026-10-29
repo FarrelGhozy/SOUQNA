@@ -19,7 +19,9 @@ import { MerchantDashboardPage } from '../pages/MerchantDashboardPage.js';
 import { MerchantProductsPage } from '../pages/MerchantProductsPage.js';
 import { MerchantProductFormPage } from '../pages/MerchantProductFormPage.js';
 import { StoreProfilePage } from '../pages/StoreProfilePage.js';
-import { WishlistPage, ChatPage, AdminDashboard } from '../pages/MiscPages.js';
+import { WishlistPage } from '../pages/WishlistPage.js';
+import { ChatPage } from '../pages/ChatPage.js';
+import { AdminDashboard } from '../pages/MiscPages.js';
 import { RequireAuth, RequireMerchant, RequireAdmin } from './guards.js';
 
 export const router = createBrowserRouter([

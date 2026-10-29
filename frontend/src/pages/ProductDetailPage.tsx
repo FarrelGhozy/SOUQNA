@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api-client.js';
 import { formatDateWIB, formatIDR } from '../lib/format.js';
 import type { Product, Review, Store } from '../types/index.js';
 
 export function ProductDetailPage() {
   const { productId } = useParams();
+  const nav = useNavigate();
   const [p, setP] = useState<Product | null>(null);
   const [store, setStore] = useState<Store | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [wished, setWished] = useState(false);
   const [sel, setSel] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export function ProductDetailPage() {
         const [s, r] = await Promise.all([api.getStore(prod.store_id), api.getReviews(prod.id)]);
         setStore(s);
         setReviews(r);
+        setWished(await api.isWishlisted(prod.id));
       } catch {
         setError('Gagal memuat produk. Coba lagi.');
       } finally {
@@ -71,6 +74,27 @@ export function ProductDetailPage() {
           alert(e instanceof Error ? e.message : 'Gagal tambah keranjang.');
         }
       }}>+ Keranjang</button>
+      <button onClick={async () => {
+        try {
+          if (wished) {
+            await api.removeFromWishlist(p.id);
+            setWished(false);
+          } else {
+            await api.addToWishlist(p.id);
+            setWished(true);
+          }
+        } catch (e) {
+          alert(e instanceof Error ? e.message : 'Gagal wishlist.');
+        }
+      }}>{wished ? '♥ Di wishlist' : '♡ Wishlist'}</button>
+      <button onClick={async () => {
+        try {
+          const c = await api.getOrCreateConversation(p.store_id);
+          nav(`/chat?thread=${c.id}`);
+        } catch (e) {
+          alert(e instanceof Error ? e.message : 'Gagal buka chat.');
+        }
+      }}>Chat toko</button>
       <h3>Ulasan ({reviews.length})</h3>
       {reviews.length === 0 ? <p>Belum ada ulasan.</p> : reviews.map((r) => (
         <div key={r.id} style={{ borderTop: '1px solid #eee', padding: '6px 0' }}>

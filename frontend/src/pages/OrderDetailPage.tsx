@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, type OrderAction } from '../lib/api-client.js';
 import { formatDateWIB, formatIDR } from '../lib/format.js';
-import type { MockUser, Order, OrderItem, OrderStatusHistory, Store } from '../types/index.js';
+import type { MockUser, Order, OrderItem, OrderStatusHistory, Review, Store } from '../types/index.js';
 
 // Detail order: aksi kontekstual sesuai peran + histori status.
 // Toast sukses/gagal tampil jelas dan hilang otomatis.
@@ -96,7 +96,12 @@ export function OrderDetailPage() {
 
       <h3>Items</h3>
       {items.length === 0 ? <p><small>Tanpa snapshot item (order seed).</small></p>
-        : items.map((i) => <div key={i.id}>{i.product_name_snapshot} ({i.variant_options_snapshot}) × {i.quantity} — {formatIDR(i.line_total)}</div>)}
+        : items.map((i) => (
+          <div key={i.id}>
+            {i.product_name_snapshot} ({i.variant_options_snapshot}) × {i.quantity} — {formatIDR(i.line_total)}
+            {isBuyer && order.status === 'completed' && <ReviewBox itemId={i.id} />}
+          </div>
+        ))}
 
       <h3>Histori status</h3>
       {hist.length === 0 ? <p><small>Belum ada histori.</small></p> : hist.map((h) => (
@@ -106,5 +111,44 @@ export function OrderDetailPage() {
         </div>
       ))}
     </>
+  );
+}
+
+// Ulasan per order-item: hanya bila order completed; 1 ulasan per item.
+function ReviewBox({ itemId }: { itemId: string }) {
+  const [review, setReview] = useState<Review | null>(null);
+  const [rating, setRating] = useState('5');
+  const [text, setText] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getReviewForItem(itemId).then(setReview);
+  }, [itemId]);
+
+  if (review) {
+    return <div><small>Ulasanmu: {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)} {review.review_text ?? ''}</small></div>;
+  }
+  return (
+    <div style={{ margin: '4px 0 8px 12px' }}>
+      {msg && <small style={{ color: msg.startsWith('ok:') ? 'green' : 'red' }}>{msg}</small>}
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <select value={rating} onChange={(e) => setRating(e.target.value)}>
+          {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{r} ★</option>)}
+        </select>
+        <input
+          placeholder="Ulasan (opsional, ≤500 char)" value={text}
+          onChange={(e) => setText(e.target.value)} maxLength={500}
+        />
+        <button onClick={async () => {
+          try {
+            const r = await api.createReview(itemId, Number(rating), text);
+            setReview(r);
+            setMsg('ok: Ulasan tersimpan.');
+          } catch (e) {
+            setMsg(e instanceof Error ? e.message : 'Gagal mengulas.');
+          }
+        }}>Kirim ulasan</button>
+      </div>
+    </div>
   );
 }
