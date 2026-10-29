@@ -13,6 +13,7 @@ import { CheckoutPage } from '../pages/CheckoutPage.js';
 import { CheckoutSuccessPage } from '../pages/CheckoutSuccessPage.js';
 import { OrdersPage } from '../pages/OrdersPage.js';
 import { OrderDetailPage } from '../pages/OrderDetailPage.js';
+import { MerchantOrdersPage } from '../pages/MerchantOrdersPage.js';
 import { WishlistPage, ChatPage, BecomeMerchantPage, MerchantDashboard, AdminDashboard } from '../pages/MiscPages.js';
 import { RequireAuth, RequireMerchant, RequireAdmin } from './guards.js';
 
@@ -50,7 +51,11 @@ export const router = createBrowserRouter([
   },
   {
     element: <MerchantLayout />,
-    children: [{ path: '/merchant', element: <RequireMerchant><MerchantDashboard /></RequireMerchant> }],
+    children: [
+      { path: '/merchant', element: <RequireMerchant><MerchantDashboard /></RequireMerchant> },
+      { path: '/merchant/orders', element: <RequireMerchant><MerchantOrdersPage /></RequireMerchant> },
+      { path: '/merchant/orders/:orderId', element: <RequireMerchant><OrderDetailPage /></RequireMerchant> },
+    ],
   },
   {
     element: <AdminLayout />,

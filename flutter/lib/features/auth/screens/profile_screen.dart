@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/auth/mock_auth.dart';
+import '../../orders/screens/merchant_orders_screen.dart';
 
 // Profil: edit nama/telepon/lokasi, logout. Data sesi via MockAuth.
 class ProfileScreen extends StatefulWidget {
@@ -58,6 +59,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const Divider(height: 32),
             OutlinedButton(onPressed: () => _auth.logout(), child: const Text('Keluar')),
+            if (s.hasStore)
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => MerchantOrdersScreen(ownerId: s.id))),
+                child: const Text('Order toko saya'),
+              ),
             if (!s.hasStore) const Text('Belum punya toko. Daftar via menu merchant (M5).',
                 style: TextStyle(color: Colors.grey)),
           ],

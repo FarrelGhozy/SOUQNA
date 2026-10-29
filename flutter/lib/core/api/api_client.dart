@@ -84,6 +84,45 @@ class CheckoutResult {
   CheckoutResult({required this.code, required this.orders});
 }
 
+// --- Order + transisi COD dummy (aturan sama dengan web) ---
+class OrderItemMock {
+  final String name;
+  final String variant;
+  final int qty;
+  final int total;
+  const OrderItemMock(this.name, this.variant, this.qty, this.total);
+}
+
+class HistoryMock {
+  final String from;
+  final String to;
+  final String? note;
+  const HistoryMock(this.from, this.to, [this.note]);
+}
+
+class OrderMock {
+  final String id;
+  final String storeId;
+  final String storeName;
+  final String buyerId;
+  String status;
+  String paymentStatus;
+  final FulfillmentMethod method;
+  final int deliveryFee;
+  final int subtotal;
+  final int discount;
+  final List<OrderItemMock> items;
+  final List<HistoryMock> history;
+  bool stockReturned = false;
+  OrderMock({
+    required this.id, required this.storeId, required this.storeName,
+    required this.buyerId, required this.status, required this.paymentStatus,
+    required this.method, required this.deliveryFee, required this.subtotal,
+    required this.discount, required this.items, required this.history,
+  });
+  int get grandTotal => subtotal - discount + deliveryFee;
+}
+
 class ApiClient {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://localhost:3000/api/v1'));
 
@@ -355,7 +394,131 @@ class ApiClient {
       id: 'ord-${DateTime.now().millisecondsSinceEpoch}-${ps.storeId}',
       storeId: ps.storeId, storeName: ps.storeName,
       grandTotal: ps.total, method: ps.method)).toList();
+    // Simpan order penuh untuk layar Pesanan (M4).
+    for (final ps in prev.perStore) {
+      _orders.add(OrderMock(
+        id: 'ord-${DateTime.now().millisecondsSinceEpoch}-${ps.storeId}',
+        storeId: ps.storeId, storeName: ps.storeName, buyerId: _buyer,
+        status: 'pending_merchant_confirmation', paymentStatus: 'unpaid',
+        method: ps.method, deliveryFee: ps.deliveryFee,
+        subtotal: ps.subtotal, discount: ps.discount, items: const [],
+        history: const [HistoryMock('created', 'pending_merchant_confirmation', 'Checkout dibuat.')],
+      ));
+    }
     _cart.clear();
     return CheckoutResult(code: code, orders: orders);
+  }
+
+  // --- Orders M4: list/detail + transisi legal + histori ---
+  static const _buyer = 'user-buyer-1';
+  static final List<OrderMock> _orders = [
+    OrderMock(id: 'ord-01', storeId: 'store-01', storeName: 'Kantin Berkah Jaya',
+      buyerId: _buyer, status: 'out_for_delivery', paymentStatus: 'unpaid',
+      method: FulfillmentMethod.merchantDelivery, deliveryFee: 5000,
+      subtotal: 24000, discount: 2000, items: const [],
+      history: const [HistoryMock('created', 'pending_merchant_confirmation'),
+        HistoryMock('pending_merchant_confirmation', 'accepted'),
+        HistoryMock('accepted', 'out_for_delivery')]),
+    OrderMock(id: 'ord-02', storeId: 'store-02', storeName: 'Hijab Nusa',
+      buyerId: _buyer, status: 'accepted', paymentStatus: 'unpaid',
+      method: FulfillmentMethod.pickup, deliveryFee: 0,
+      subtotal: 35000, discount: 3000, items: const [],
+      history: const [HistoryMock('created', 'pending_merchant_confirmation'),
+        HistoryMock('pending_merchant_confirmation', 'accepted')]),
+    OrderMock(id: 'ord-03', storeId: 'store-03', storeName: 'PrintQu Cepat',
+      buyerId: _buyer, status: 'completed', paymentStatus: 'paid',
+      method: FulfillmentMethod.pickup, deliveryFee: 0,
+      subtotal: 25000, discount: 0,
+      items: const [OrderItemMock('Jilid Softcover Skripsi', 'Standar', 1, 25000)],
+      history: const [HistoryMock('created', 'pending_merchant_confirmation'),
+        HistoryMock('pending_merchant_confirmation', 'accepted'),
+        HistoryMock('accepted', 'ready_for_pickup'),
+        HistoryMock('ready_for_pickup', 'completed', 'Diterima + lunas.')]),
+  ];
+
+  Future<List<OrderMock>> getOrders() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final list = _orders.toList();
+    list.sort((a, b) => b.id.compareTo(a.id));
+    return list;
+  }
+
+  Future<List<OrderMock>> getMerchantOrders(String ownerId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final mine = storesMock.where((s) => s.ownerId == ownerId).map((s) => s.id).toSet();
+    return _orders.where((o) => mine.contains(o.storeId)).toList();
+  }
+
+  Future<OrderMock?> getOrder(String id) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      return _orders.firstWhere((o) => o.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Transisi legal saja; [isMerchant] = pemilik toko, else pembeli pemilik.
+  Future<OrderMock> transitionOrder(String id, String action, {required bool isMerchant}) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    final o = _orders.firstWhere((x) => x.id == id, orElse: () => throw Exception('Pesanan tidak ditemukan.'));
+    final from = o.status;
+    void needBuyer() {
+      if (isMerchant) throw Exception('Hanya pembeli pemilik pesanan.');
+    }
+
+    void needMerchant() {
+      if (!isMerchant) throw Exception('Hanya merchant pemilik toko.');
+    }
+
+    switch (action) {
+      case 'cancel':
+        needBuyer();
+        if (from != 'pending_merchant_confirmation') throw Exception('Batal hanya saat menunggu konfirmasi merchant.');
+        o.status = 'cancelled';
+        break;
+      case 'accept':
+        needMerchant();
+        if (from != 'pending_merchant_confirmation') throw Exception('Terima hanya saat menunggu konfirmasi.');
+        o.status = 'accepted';
+        break;
+      case 'reject':
+        needMerchant();
+        if (from != 'pending_merchant_confirmation') throw Exception('Tolak hanya saat menunggu konfirmasi.');
+        o.status = 'rejected';
+        break;
+      case 'ready':
+        needMerchant();
+        if (from != 'accepted') throw Exception('Siap-ambil hanya dari status accepted.');
+        if (o.method != FulfillmentMethod.pickup) throw Exception('Pesanan antar pakai out-for-delivery.');
+        o.status = 'ready_for_pickup';
+        break;
+      case 'out':
+        needMerchant();
+        if (from != 'accepted') throw Exception('Antar hanya dari status accepted.');
+        if (o.method != FulfillmentMethod.merchantDelivery) throw Exception('Pesanan ambil-sendiri pakai ready-for-pickup.');
+        o.status = 'out_for_delivery';
+        break;
+      case 'received':
+        needBuyer();
+        if (from != 'ready_for_pickup' && from != 'out_for_delivery') {
+          throw Exception('Konfirmasi terima hanya setelah barang siap/diantar.');
+        }
+        o.status = o.paymentStatus == 'paid' ? 'completed' : 'received_by_buyer';
+        break;
+      case 'paid':
+        needMerchant();
+        if (o.paymentStatus == 'paid') throw Exception('Sudah lunas.');
+        if (from == 'completed' || from == 'rejected' || from == 'cancelled') {
+          throw Exception('Pesanan sudah final.');
+        }
+        o.paymentStatus = 'paid';
+        if (from == 'received_by_buyer') o.status = 'completed';
+        break;
+      default:
+        throw Exception('Aksi tidak dikenal.');
+    }
+    o.history.add(HistoryMock(from, o.status));
+    return o;
   }
 }

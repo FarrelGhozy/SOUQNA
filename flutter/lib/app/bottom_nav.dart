@@ -5,6 +5,7 @@ import '../../features/auth/screens/profile_screen.dart';
 import '../../features/cart/screens/cart_screen.dart';
 import '../../features/catalog/screens/home_screen.dart';
 import '../../features/catalog/screens/search_screen.dart';
+import '../../features/orders/screens/orders_screen.dart';
 
 // Bottom nav 5 tab. Tab personal (keranjang/pesanan/akun) wajib login —
 // tanpa sesi tampilkan LoginScreen (guard). Merchant via akun (M5), admin
@@ -39,6 +40,8 @@ class _BottomNavState extends State<BottomNav> {
         return const SearchScreen();
       case 2:
         return const CartScreen();
+      case 3:
+        return const OrdersScreen();
       case 4:
         return const ProfileScreen();
       default:

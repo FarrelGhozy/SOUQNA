@@ -36,9 +36,9 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M4 — Pesanan + COD dummy · issue #4
 
-- [ ] List/detail order pembeli; merchant list/detail order tokonya
-- [ ] Transisi legal saja: cancel (pending), accept/reject, ready/out-for-delivery, confirm-received, mark-paid, completed = terima + lunas
-- [ ] Toast jelas saat transisi ilegal; histori status tampil
+- [x] List/detail order pembeli; merchant list/detail order tokonya
+- [x] Transisi legal saja: cancel (pending), accept/reject, ready/out-for-delivery, confirm-received, mark-paid, completed = terima + lunas
+- [x] Toast jelas saat transisi ilegal; histori status tampil
 
 ## M5 — Merchant dummy · issue #5
 

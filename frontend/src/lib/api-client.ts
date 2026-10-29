@@ -7,7 +7,7 @@ import {
   checkouts as seedCheckouts, conversations, messages, orders as seedOrders,
   orderItems as seedOrderItems, reviews, users, vouchers, wishlist,
 } from '../mocks/extras.mock.js';
-import type { Checkout, Order, OrderItem, Product } from '../types/index.js';
+import type { Checkout, Order, OrderItem, OrderStatusHistory, Product } from '../types/index.js';
 import { delay } from './format.js';
 import { currentSession, updateProfile } from './mock-auth.js';
 
@@ -220,6 +220,160 @@ export function previewCheckout(input: CheckoutInput): CheckoutPreview {
   };
 }
 
+// --- Order + transisi COD (simulasi server: hanya transisi legal) ---
+export type OrderAction =
+  | 'cancel' | 'accept' | 'reject' | 'ready-for-pickup'
+  | 'out-for-delivery' | 'confirm-received' | 'mark-paid';
+
+const ORD_OV_KEY = 'souqna:order-overrides';
+const HIST_KEY = 'souqna:extra-history';
+const RETURNED_KEY = 'souqna:stock-returned';
+const dayAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
+
+const seedHistory: OrderStatusHistory[] = [
+  { id: 'h-01a', order_id: 'ord-01', from_status: 'created', to_status: 'pending_merchant_confirmation', changed_by: 'user-buyer-1', note: 'Checkout dibuat.', created_at: dayAgo(2) },
+  { id: 'h-01b', order_id: 'ord-01', from_status: 'pending_merchant_confirmation', to_status: 'accepted', changed_by: 'user-merchant-1', note: 'Pesanan diterima.', created_at: dayAgo(2) },
+  { id: 'h-01c', order_id: 'ord-01', from_status: 'accepted', to_status: 'out_for_delivery', changed_by: 'user-merchant-1', note: 'Kurir toko jalan.', created_at: dayAgo(1) },
+  { id: 'h-02a', order_id: 'ord-02', from_status: 'created', to_status: 'pending_merchant_confirmation', changed_by: 'user-buyer-1', note: 'Checkout dibuat.', created_at: dayAgo(2) },
+  { id: 'h-02b', order_id: 'ord-02', from_status: 'pending_merchant_confirmation', to_status: 'accepted', changed_by: 'user-merchant-1', note: 'Pesanan diterima.', created_at: dayAgo(1) },
+  { id: 'h-03a', order_id: 'ord-03', from_status: 'created', to_status: 'pending_merchant_confirmation', changed_by: 'user-buyer-1', note: 'Checkout dibuat.', created_at: dayAgo(5) },
+  { id: 'h-03b', order_id: 'ord-03', from_status: 'pending_merchant_confirmation', to_status: 'accepted', changed_by: 'user-merchant-1', created_at: dayAgo(4) },
+  { id: 'h-03c', order_id: 'ord-03', from_status: 'accepted', to_status: 'ready_for_pickup', changed_by: 'user-merchant-1', created_at: dayAgo(4) },
+  { id: 'h-03d', order_id: 'ord-03', from_status: 'ready_for_pickup', to_status: 'completed', changed_by: 'user-buyer-1', note: 'Diterima + lunas.', created_at: dayAgo(3) },
+];
+
+function orderOverrides(): Record<string, Partial<Pick<Order, 'status' | 'payment_status'>>> {
+  return readJSON<Record<string, Partial<Pick<Order, 'status' | 'payment_status'>>>>(ORD_OV_KEY, {});
+}
+function extraHistory(): OrderStatusHistory[] {
+  return readJSON<OrderStatusHistory[]>(HIST_KEY, []);
+}
+function returnedSet(): Set<string> {
+  return new Set(readJSON<string[]>(RETURNED_KEY, []));
+}
+
+function allOrders(): Order[] {
+  const ov = orderOverrides();
+  const apply = (o: Order): Order => (ov[o.id] ? { ...o, ...ov[o.id] } : o);
+  return [...extraOrders().map(apply), ...seedOrders.map(apply)]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+}
+
+function findOrder(id: string): Order | null {
+  return allOrders().find((o) => o.id === id) ?? null;
+}
+
+function persistOrder(o: Order) {
+  const ov = orderOverrides();
+  ov[o.id] = { status: o.status, payment_status: o.payment_status };
+  writeJSON(ORD_OV_KEY, ov);
+  const extras = extraOrders();
+  const i = extras.findIndex((x) => x.id === o.id);
+  if (i >= 0) {
+    extras[i] = { ...o };
+    writeJSON(ORD_KEY, extras);
+  }
+}
+
+function pushHistory(orderId: string, from: string, to: Order['status'], note?: string) {
+  const me = currentSession();
+  const h: OrderStatusHistory = {
+    id: `h-${Date.now()}`, order_id: orderId, from_status: from, to_status: to,
+    changed_by: me?.id ?? 'system', note, created_at: new Date().toISOString(),
+  };
+  writeJSON(HIST_KEY, [...extraHistory(), h]);
+}
+
+/** Kembalikan stok tepat sekali (idempotent) saat cancel/reject. */
+function returnStockOnce(o: Order) {
+  const done = returnedSet();
+  if (done.has(o.id)) return;
+  const items = [...seedOrderItems, ...extraOrderItems()].filter((i) => i.order_id === o.id);
+  for (const it of items) {
+    for (const p of products) {
+      const v = p.variants.find((x) => x.id === it.product_variant_id);
+      if (v) v.stock_quantity += it.quantity;
+    }
+  }
+  persistStock();
+  done.add(o.id);
+  writeJSON(RETURNED_KEY, [...done]);
+}
+
+const TERMINAL: Order['status'][] = ['completed', 'rejected', 'cancelled'];
+
+/** Terapkan transisi legal; lempar Error jelas bila ilegal. */
+function applyTransition(orderId: string, action: OrderAction): Order {
+  const me = currentSession();
+  if (!me) throw new Error('Wajib login.');
+  const o = findOrder(orderId);
+  if (!o) throw new Error('Pesanan tidak ditemukan.');
+  const store = stores.find((s) => s.id === o.store_id);
+  const isBuyer = o.buyer_id === me.id;
+  const isMerchant = store?.owner_id === me.id;
+  const from = o.status;
+
+  const needBuyer = () => { if (!isBuyer) throw new Error('Hanya pembeli pemilik pesanan.'); };
+  const needMerchant = () => { if (!isMerchant) throw new Error('Hanya merchant pemilik toko.'); };
+
+  switch (action) {
+    case 'cancel': {
+      needBuyer();
+      if (from !== 'pending_merchant_confirmation') throw new Error('Batal hanya saat menunggu konfirmasi merchant.');
+      o.status = 'cancelled';
+      returnStockOnce(o);
+      break;
+    }
+    case 'accept': {
+      needMerchant();
+      if (from !== 'pending_merchant_confirmation') throw new Error('Terima hanya saat menunggu konfirmasi.');
+      o.status = 'accepted';
+      break;
+    }
+    case 'reject': {
+      needMerchant();
+      if (from !== 'pending_merchant_confirmation') throw new Error('Tolak hanya saat menunggu konfirmasi.');
+      o.status = 'rejected';
+      returnStockOnce(o);
+      break;
+    }
+    case 'ready-for-pickup': {
+      needMerchant();
+      if (from !== 'accepted') throw new Error('Siap-ambil hanya dari status accepted.');
+      if (o.delivery_method !== 'pickup') throw new Error('Pesanan antar pakai out-for-delivery.');
+      o.status = 'ready_for_pickup';
+      break;
+    }
+    case 'out-for-delivery': {
+      needMerchant();
+      if (from !== 'accepted') throw new Error('Antar hanya dari status accepted.');
+      if (o.delivery_method !== 'merchant_delivery') throw new Error('Pesanan ambil-sendiri pakai ready-for-pickup.');
+      o.status = 'out_for_delivery';
+      break;
+    }
+    case 'confirm-received': {
+      needBuyer();
+      if (from !== 'ready_for_pickup' && from !== 'out_for_delivery')
+        throw new Error('Konfirmasi terima hanya setelah barang siap/diantar.');
+      o.status = o.payment_status === 'paid' ? 'completed' : 'received_by_buyer';
+      break;
+    }
+    case 'mark-paid': {
+      needMerchant();
+      if (o.payment_status === 'paid') throw new Error('Sudah lunas.');
+      if (TERMINAL.includes(from)) throw new Error('Pesanan sudah final.');
+      o.payment_status = 'paid';
+      if (from === 'received_by_buyer') o.status = 'completed';
+      break;
+    }
+  }
+
+  persistOrder(o);
+  pushHistory(orderId, from, o.status,
+    action === 'mark-paid' ? 'Tunai diterima merchant.' : undefined);
+  return o;
+}
+
 export const api = {
   async getCategories() { await delay(); return categories.filter((c) => c.is_active); },
   async getStores() { await delay(); return stores.filter((s) => s.status === 'active'); },
@@ -363,6 +517,7 @@ export const api = {
     writeJSON(ORD_KEY, [...extraOrders(), ...orders]);
     writeJSON(OI_KEY, [...extraOrderItems(), ...items]);
     saveCart([]);
+    for (const o of orders) pushHistory(o.id, 'created', 'pending_merchant_confirmation', 'Checkout dibuat.');
 
     return { checkout, orders, items };
   },
@@ -377,14 +532,28 @@ export const api = {
 
   async getOrders() {
     await delay();
-    return [...extraOrders(), ...seedOrders].sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return allOrders();
   },
   async getOrder(id: string) {
     await delay();
-    const allO = [...seedOrders, ...extraOrders()];
     const allI = [...seedOrderItems, ...extraOrderItems()];
-    return { order: allO.find((o) => o.id === id) ?? null, items: allI.filter((i) => i.order_id === id) };
+    return { order: findOrder(id), items: allI.filter((i) => i.order_id === id) };
+  },
+  async getMerchantOrders() {
+    await delay();
+    const me = currentSession();
+    if (!me) throw new Error('Wajib login.');
+    const mine = stores.filter((s) => s.owner_id === me.id).map((s) => s.id);
+    return allOrders().filter((o) => mine.includes(o.store_id));
+  },
+  async getOrderHistory(orderId: string): Promise<OrderStatusHistory[]> {
+    await delay(150);
+    return [...seedHistory, ...extraHistory()].filter((h) => h.order_id === orderId)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  },
+  async transitionOrder(orderId: string, action: OrderAction) {
+    await delay(250);
+    return applyTransition(orderId, action);
   },
   async getCheckouts() {
     await delay();

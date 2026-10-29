@@ -28,6 +28,10 @@ export interface OrderItem {
   product_name_snapshot: string; variant_options_snapshot: string;
   unit_price_snapshot: number; quantity: number; line_total: number;
 }
+export interface OrderStatusHistory {
+  id: string; order_id: string; from_status: string; to_status: OrderStatus;
+  changed_by: string; note?: string; created_at: string;
+}
 export interface MockUser {
   id: string; full_name: string; email: string; role: 'buyer' | 'merchant' | 'admin';
   hasStore: boolean; store_id?: string; phone?: string; default_location?: string;
