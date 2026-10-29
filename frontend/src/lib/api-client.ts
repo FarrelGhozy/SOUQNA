@@ -7,7 +7,7 @@ import {
   checkouts as seedCheckouts, conversations, messages, orders as seedOrders,
   orderItems as seedOrderItems, reviews, users, vouchers, wishlist,
 } from '../mocks/extras.mock.js';
-import type { Checkout, Conversation, Message, Order, OrderItem, OrderStatusHistory, Product, ProductVariant, Review, Store, WishlistItem } from '../types/index.js';
+import type { Checkout, AdminAuditLog, Category, Conversation, Message, MockUser, Order, OrderItem, OrderStatusHistory, Product, ProductVariant, Review, Store, Voucher, WishlistItem } from '../types/index.js';
 import { delay } from './format.js';
 import { attachStore, currentSession, updateProfile } from './mock-auth.js';
 
@@ -169,6 +169,89 @@ function isParticipant(conv: Conversation, userId: string): boolean {
   return !!st && st.owner_id === userId;
 }
 
+// --- Admin dummy: users/kategori/moderasi/voucher/audit (web prioritas) ---
+const CAT_KEY = 'souqna:extra-categories';
+const CAT_OV_KEY = 'souqna:category-overrides';
+const VCH_KEY = 'souqna:extra-vouchers';
+const VCH_OV_KEY = 'souqna:voucher-overrides';
+const AUD_KEY = 'souqna:extra-audit-logs';
+const EXTRA_USERS_KEY = 'souqna:extra-users';
+const PROFILE_OV_KEY = 'souqna:profile-overrides';
+
+function requireAdmin(): MockUser {
+  const me = currentSession();
+  if (!me || me.role !== 'admin') throw new Error('Hanya admin.');
+  return me;
+}
+let extraCatCache: Category[] | null = null;
+let extraVchCache: Voucher[] | null = null;
+function extraCategories(): Category[] {
+  if (!extraCatCache) extraCatCache = readJSON<Category[]>(CAT_KEY, []);
+  return extraCatCache;
+}
+function saveCategories() { writeJSON(CAT_KEY, extraCategories()); }
+function applyCategoryOverrides(list: Category[]): Category[] {
+  const ov = readJSON<Record<string, Category>>(CAT_OV_KEY, {});
+  return list.map((c) => (ov[c.id] ? { ...c, ...ov[c.id], id: c.id } : c));
+}
+function allCategories(): Category[] {
+  return applyCategoryOverrides([...categories, ...extraCategories()]);
+}
+function saveCategoryOv(c: Category) {
+  const ov = readJSON<Record<string, Category>>(CAT_OV_KEY, {});
+  ov[c.id] = { ...c };
+  writeJSON(CAT_OV_KEY, ov);
+}
+function persistCategory(c: Category) {
+  if (categories.some((x) => x.id === c.id)) saveCategoryOv(c);
+  else saveCategories();
+}
+function extraVouchers(): Voucher[] {
+  if (!extraVchCache) extraVchCache = readJSON<Voucher[]>(VCH_KEY, []);
+  return extraVchCache;
+}
+function saveVouchers() { writeJSON(VCH_KEY, extraVouchers()); }
+function allVouchers(): Voucher[] {
+  const ov = readJSON<Record<string, Voucher>>(VCH_OV_KEY, {});
+  return [
+    ...vouchers.map((v) => (ov[v.id] ? { ...v, ...ov[v.id], id: v.id } : v)),
+    ...extraVouchers(),
+  ];
+}
+function persistVoucher(v: Voucher) {
+  if (vouchers.some((x) => x.id === v.id)) {
+    const ov = readJSON<Record<string, Voucher>>(VCH_OV_KEY, {});
+    ov[v.id] = { ...v };
+    writeJSON(VCH_OV_KEY, ov);
+  } else saveVouchers();
+}
+function extraAuditLogs(): AdminAuditLog[] {
+  return readJSON<AdminAuditLog[]>(AUD_KEY, []);
+}
+function logAdmin(action: string, target_type: string, target_id: string, metadata?: Record<string, unknown>) {
+  const me = currentSession();
+  const logs = extraAuditLogs();
+  logs.unshift({
+    id: `log-${Date.now()}`, admin_user_id: me?.id ?? 'unknown',
+    action, target_type, target_id, ...(metadata ? { metadata } : {}),
+    created_at: new Date().toISOString(),
+  });
+  writeJSON(AUD_KEY, logs.slice(0, 200));
+}
+function allUsers(): MockUser[] {
+  const extras = readJSON<MockUser[]>(EXTRA_USERS_KEY, []);
+  const ov = readJSON<Record<string, Partial<MockUser>>>(PROFILE_OV_KEY, {});
+  const apply = (u: MockUser) => (ov[u.id] ? { ...u, ...ov[u.id] } : u);
+  const seen = new Set<string>();
+  const out: MockUser[] = [];
+  for (const u of [...users, ...extras]) {
+    if (seen.has(u.id)) continue;
+    seen.add(u.id);
+    out.push(apply(u));
+  }
+  return out;
+}
+
 // --- Stok dummy: override persist agar pengurangan stok selamat reload ---
 const STOCK_KEY = 'souqna:stock-overrides';
 function applyStockOverrides() {
@@ -270,7 +353,7 @@ export interface CheckoutPreview {
 export interface CheckoutResult { checkout: Checkout; orders: Order[]; items: OrderItem[] }
 
 function voucherAmount(code: string, subtotal: number): { ok: true; amount: number } | { ok: false; reason: string } {
-  const v = vouchers.find((x) => x.code === code.toUpperCase() && x.is_active);
+  const v = allVouchers().find((x) => x.code === code.toUpperCase() && x.is_active);
   if (!v) return { ok: false, reason: 'Voucher tidak ditemukan / nonaktif' };
   const t = Date.now();
   if (new Date(v.starts_at).getTime() > t || new Date(v.ends_at).getTime() < t)
@@ -509,7 +592,7 @@ function applyTransition(orderId: string, action: OrderAction): Order {
 }
 
 export const api = {
-  async getCategories() { await delay(); return categories.filter((c) => c.is_active); },
+  async getCategories() { await delay(); return allCategories().filter((c) => c.is_active); },
   async getStores() { await delay(); return allStores().filter((s) => s.status === 'active'); },
 
   async getProducts(params: ProductQuery = {}): Promise<Paged<Product>> {
@@ -1065,14 +1148,204 @@ export const api = {
     saveReviews();
     return r;
   },
-  async getVouchers() { await delay(); return vouchers; },
+  async getVouchers() { await delay(); return allVouchers(); },
   async validateVoucher(code: string, subtotal: number) {
     await delay(200);
     const r = voucherAmount(code, subtotal);
     if (!r.ok) return { ok: false as const, reason: (r as { reason: string }).reason };
     return { ok: true as const, amount: (r as { amount: number }).amount };
   },
-  async getUsers() { await delay(); return users; },
+  async getUsers() { await delay(); return allUsers(); },
+
+  // --- Admin (mock-first; semua aksi juga dicatat di audit log) ---
+  async getAdminStats() {
+    requireAdmin();
+    await delay(200);
+    const orders = allOrders();
+    const byStatus: Record<string, number> = {};
+    for (const o of orders) byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
+    const prods = allProducts();
+    return {
+      users: allUsers().length,
+      stores: allStores().length,
+      activeStores: allStores().filter((s) => s.status === 'active').length,
+      products: prods.length,
+      publishedProducts: prods.filter((p) => p.status === 'published').length,
+      orders: orders.length,
+      ordersByStatus: byStatus,
+      revenue: orders.filter((o) => o.status === 'completed')
+        .reduce((s, o) => s + o.grand_total, 0),
+      activeVouchers: allVouchers().filter((v) => v.is_active).length,
+      reviews: allReviews().length,
+      conversations: allConversations().length,
+    };
+  },
+  async getAdminUsers() {
+    requireAdmin();
+    await delay(150);
+    return allUsers();
+  },
+  async sendPasswordRecovery(userId: string) {
+    requireAdmin();
+    await delay(250);
+    const u = allUsers().find((x) => x.id === userId);
+    if (!u) throw new Error('Pengguna tidak ditemukan.');
+    logAdmin('send_password_recovery', 'user', userId, { email: u.email });
+    return { ok: true as const, message: `Tautan pemulihan dikirim ke ${u.email} (dummy).` };
+  },
+  async getAdminCategories() {
+    requireAdmin();
+    await delay(150);
+    return allCategories();
+  },
+  async createCategory(input: { name: string; description?: string }) {
+    requireAdmin();
+    await delay(250);
+    const name = input.name.trim();
+    if (name.length < 3) throw new Error('Nama kategori minimal 3 karakter.');
+    const slugBase = slugify(name);
+    const taken = new Set(allCategories().map((c) => c.slug));
+    let slug = slugBase;
+    let i = 2;
+    while (taken.has(slug)) slug = `${slugBase}-${i++}`;
+    const c: Category = {
+      id: `cat-${Date.now()}`, name, slug,
+      description: input.description?.trim(), is_active: true,
+    };
+    extraCategories().push(c);
+    saveCategories();
+    logAdmin('create_category', 'category', c.id, { name });
+    return c;
+  },
+  async updateCategory(id: string, patch: { name?: string; description?: string; is_active?: boolean }) {
+    requireAdmin();
+    await delay(250);
+    const c = allCategories().find((x) => x.id === id);
+    if (!c) throw new Error('Kategori tidak ditemukan.');
+    if (patch.name !== undefined) {
+      if (patch.name.trim().length < 3) throw new Error('Nama kategori minimal 3 karakter.');
+      c.name = patch.name.trim();
+    }
+    if (patch.description !== undefined) c.description = patch.description.trim();
+    if (patch.is_active !== undefined) c.is_active = patch.is_active;
+    persistCategory(c);
+    logAdmin('update_category', 'category', id, { ...patch });
+    return { ...c };
+  },
+  async deleteCategory(id: string) {
+    requireAdmin();
+    await delay(250);
+    const c = allCategories().find((x) => x.id === id);
+    if (!c) throw new Error('Kategori tidak ditemukan.');
+    // Nonaktif saja agar produk historis tetap terbaca.
+    c.is_active = false;
+    persistCategory(c);
+    logAdmin('delete_category', 'category', id, { name: c.name });
+  },
+  async getAdminProducts(q?: string) {
+    requireAdmin();
+    await delay(200);
+    const query = (q ?? '').toLowerCase();
+    return allProducts()
+      .filter((p) => !query || `${p.name} ${p.slug}`.toLowerCase().includes(query))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+  async setProductStatusAdmin(productId: string, status: 'published' | 'hidden' | 'suspended') {
+    requireAdmin();
+    await delay(250);
+    const p = allProducts().find((x) => x.id === productId);
+    if (!p) throw new Error('Produk tidak ditemukan.');
+    p.status = status;
+    persistProduct(p);
+    logAdmin('moderate_product', 'product', productId, { status });
+    return { ...p };
+  },
+  async getAdminOrders() {
+    requireAdmin();
+    await delay(200);
+    return allOrders();
+  },
+  async getAdminVouchers() {
+    requireAdmin();
+    await delay(150);
+    return allVouchers().sort((a, b) => a.code.localeCompare(b.code));
+  },
+  async createVoucher(input: {
+    code: string; description?: string; discount_type: 'percentage' | 'fixed_amount';
+    discount_value: number; minimum_subtotal: number; maximum_discount?: number;
+    starts_at: string; ends_at: string; is_active?: boolean;
+  }) {
+    requireAdmin();
+    await delay(250);
+    const code = input.code.trim().toUpperCase();
+    if (!/^[A-Z0-9]{3,20}$/.test(code)) throw new Error('Kode 3–20 char alfanumerik.');
+    if (allVouchers().some((v) => v.code === code)) throw new Error('Kode voucher sudah dipakai.');
+    if (!['percentage', 'fixed_amount'].includes(input.discount_type)) throw new Error('Tipe diskon tidak valid.');
+    const value = Number(input.discount_value);
+    if (!Number.isFinite(value) || value <= 0) throw new Error('Nilai diskon tidak valid.');
+    if (input.discount_type === 'percentage' && value > 100) throw new Error('Persen maksimal 100.');
+    const min = Number(input.minimum_subtotal);
+    if (!Number.isFinite(min) || min < 0) throw new Error('Min. subtotal tidak valid.');
+    const start = new Date(input.starts_at);
+    const end = new Date(input.ends_at);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end)
+      throw new Error('Rentang tanggal tidak valid.');
+    const v: Voucher = {
+      id: `v-${Date.now()}`, code,
+      description: input.description?.trim() || code,
+      discount_type: input.discount_type, discount_value: value,
+      minimum_subtotal: Math.floor(min),
+      ...(input.maximum_discount != null ? { maximum_discount: Math.floor(Number(input.maximum_discount)) } : {}),
+      starts_at: start.toISOString(), ends_at: end.toISOString(),
+      is_active: input.is_active ?? true,
+    };
+    extraVouchers().push(v);
+    saveVouchers();
+    logAdmin('create_voucher', 'voucher', v.id, { code });
+    return v;
+  },
+  async updateVoucher(id: string, patch: {
+    description?: string; discount_value?: number; minimum_subtotal?: number;
+    maximum_discount?: number; starts_at?: string; ends_at?: string; is_active?: boolean;
+  }) {
+    requireAdmin();
+    await delay(250);
+    const v = allVouchers().find((x) => x.id === id);
+    if (!v) throw new Error('Voucher tidak ditemukan.');
+    if (patch.description !== undefined) v.description = patch.description.trim();
+    if (patch.discount_value !== undefined) {
+      const value = Number(patch.discount_value);
+      if (!Number.isFinite(value) || value <= 0) throw new Error('Nilai diskon tidak valid.');
+      if (v.discount_type === 'percentage' && value > 100) throw new Error('Persen maksimal 100.');
+      v.discount_value = value;
+    }
+    if (patch.minimum_subtotal !== undefined) {
+      const min = Number(patch.minimum_subtotal);
+      if (!Number.isFinite(min) || min < 0) throw new Error('Min. subtotal tidak valid.');
+      v.minimum_subtotal = Math.floor(min);
+    }
+    if (patch.maximum_discount !== undefined) v.maximum_discount = Math.floor(Number(patch.maximum_discount));
+    if (patch.starts_at !== undefined) {
+      const d = new Date(patch.starts_at);
+      if (isNaN(d.getTime())) throw new Error('Tanggal mulai tidak valid.');
+      v.starts_at = d.toISOString();
+    }
+    if (patch.ends_at !== undefined) {
+      const d = new Date(patch.ends_at);
+      if (isNaN(d.getTime())) throw new Error('Tanggal berakhir tidak valid.');
+      v.ends_at = d.toISOString();
+    }
+    if (new Date(v.starts_at) >= new Date(v.ends_at)) throw new Error('Rentang tanggal tidak valid.');
+    if (patch.is_active !== undefined) v.is_active = patch.is_active;
+    persistVoucher(v);
+    logAdmin('update_voucher', 'voucher', id, { ...patch });
+    return { ...v };
+  },
+  async getAuditLogs(): Promise<AdminAuditLog[]> {
+    requireAdmin();
+    await delay(150);
+    return extraAuditLogs();
+  },
 };
 
 export { stores };

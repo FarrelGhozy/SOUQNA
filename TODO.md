@@ -54,7 +54,7 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M7 — Admin UI (web prioritas) · issue #7
 
-- [ ] Dashboard statistik sederhana, users, kategori CRUD, moderasi hide/publish, orders lihat, voucher CRUD, audit log dummy
+- [x] Dashboard statistik sederhana, users, kategori CRUD, moderasi hide/publish, orders lihat, voucher CRUD, audit log dummy
 
 ## M8 — Parity + demo · issue #8
 

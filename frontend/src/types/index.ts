@@ -45,3 +45,8 @@ export interface Voucher {
   discount_value: number; minimum_subtotal: number; maximum_discount?: number;
   starts_at: string; ends_at: string; is_active: boolean;
 }
+export interface AdminAuditLog {
+  id: string; admin_user_id: string; action: string;
+  target_type: string; target_id: string; metadata?: Record<string, unknown>;
+  created_at: string;
+}

@@ -21,7 +21,13 @@ import { MerchantProductFormPage } from '../pages/MerchantProductFormPage.js';
 import { StoreProfilePage } from '../pages/StoreProfilePage.js';
 import { WishlistPage } from '../pages/WishlistPage.js';
 import { ChatPage } from '../pages/ChatPage.js';
-import { AdminDashboard } from '../pages/MiscPages.js';
+import { AdminDashboardPage } from '../pages/AdminDashboardPage.js';
+import { AdminUsersPage } from '../pages/AdminUsersPage.js';
+import { AdminCategoriesPage } from '../pages/AdminCategoriesPage.js';
+import { AdminProductsPage } from '../pages/AdminProductsPage.js';
+import { AdminOrdersPage } from '../pages/AdminOrdersPage.js';
+import { AdminVouchersPage } from '../pages/AdminVouchersPage.js';
+import { AdminAuditLogsPage } from '../pages/AdminAuditLogsPage.js';
 import { RequireAuth, RequireMerchant, RequireAdmin } from './guards.js';
 
 export const router = createBrowserRouter([
@@ -70,6 +76,14 @@ export const router = createBrowserRouter([
   },
   {
     element: <AdminLayout />,
-    children: [{ path: '/admin', element: <RequireAdmin><AdminDashboard /></RequireAdmin> }],
+    children: [
+      { path: '/admin', element: <RequireAdmin><AdminDashboardPage /></RequireAdmin> },
+      { path: '/admin/users', element: <RequireAdmin><AdminUsersPage /></RequireAdmin> },
+      { path: '/admin/categories', element: <RequireAdmin><AdminCategoriesPage /></RequireAdmin> },
+      { path: '/admin/products', element: <RequireAdmin><AdminProductsPage /></RequireAdmin> },
+      { path: '/admin/orders', element: <RequireAdmin><AdminOrdersPage /></RequireAdmin> },
+      { path: '/admin/vouchers', element: <RequireAdmin><AdminVouchersPage /></RequireAdmin> },
+      { path: '/admin/audit-logs', element: <RequireAdmin><AdminAuditLogsPage /></RequireAdmin> },
+    ],
   },
 ]);
