@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/auth/mock_auth.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
+import '../../features/cart/screens/cart_screen.dart';
 import '../../features/catalog/screens/home_screen.dart';
 import '../../features/catalog/screens/search_screen.dart';
 
@@ -36,6 +37,8 @@ class _BottomNavState extends State<BottomNav> {
         return const HomeScreen();
       case 1:
         return const SearchScreen();
+      case 2:
+        return const CartScreen();
       case 4:
         return const ProfileScreen();
       default:

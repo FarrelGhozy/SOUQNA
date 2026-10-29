@@ -63,12 +63,13 @@ export function ProductDetailPage() {
         ))}
       </div>
       {v && <p><b>{formatIDR(v.price)}</b> · stok {v.stock_quantity}</p>}
-      <button disabled={blocked || !v || v.stock_quantity === 0} onClick={() => {
-        const raw = localStorage.getItem('souqna:cart');
-        const cart = raw ? JSON.parse(raw) : [];
-        cart.push({ id: `cart-${Date.now()}`, variant_id: v.id, quantity: 1 });
-        localStorage.setItem('souqna:cart', JSON.stringify(cart));
-        alert('Masuk keranjang (dummy)');
+      <button disabled={blocked || !v || v.stock_quantity === 0} onClick={async () => {
+        try {
+          await api.addToCart(v.id, 1);
+          alert('Masuk keranjang (dummy)');
+        } catch (e) {
+          alert(e instanceof Error ? e.message : 'Gagal tambah keranjang.');
+        }
       }}>+ Keranjang</button>
       <h3>Ulasan ({reviews.length})</h3>
       {reviews.length === 0 ? <p>Belum ada ulasan.</p> : reviews.map((r) => (

@@ -17,6 +17,73 @@ class Paged<T> {
   const Paged(this.data, this.total, this.page, this.limit);
 }
 
+class CartLine {
+  final String id;
+  final String variantId;
+  int quantity;
+  CartLine({required this.id, required this.variantId, required this.quantity});
+}
+
+class CartDetailed {
+  final String id;
+  final String variantId;
+  final int quantity;
+  final String productId;
+  final String productName;
+  final String storeId;
+  final String storeName;
+  final String variantLabel;
+  final int unitPrice;
+  final int stock;
+  final String? blockReason;
+  CartDetailed({
+    required this.id, required this.variantId, required this.quantity,
+    required this.productId, required this.productName, required this.storeId,
+    required this.storeName, required this.variantLabel, required this.unitPrice,
+    required this.stock, this.blockReason,
+  });
+  int get lineTotal => unitPrice * quantity;
+  bool get purchasable => blockReason == null;
+}
+
+enum FulfillmentMethod { pickup, merchantDelivery }
+
+class StoreBreakdown {
+  final String storeId;
+  final String storeName;
+  final int subtotal;
+  final int discount;
+  final int deliveryFee;
+  final FulfillmentMethod method;
+  StoreBreakdown({required this.storeId, required this.storeName, required this.subtotal, required this.discount, required this.deliveryFee, required this.method});
+  int get total => subtotal - discount + deliveryFee;
+}
+
+class CheckoutPreview {
+  final List<StoreBreakdown> perStore;
+  final int subtotal;
+  final int discountTotal;
+  final int grandTotal;
+  CheckoutPreview({required this.perStore, required this.subtotal, required this.discountTotal})
+      : grandTotal = perStore.fold(0, (s, p) => s + p.total);
+  int get deliveryTotal => perStore.fold(0, (s, p) => s + p.deliveryFee);
+}
+
+class PlacedOrder {
+  final String id;
+  final String storeId;
+  final String storeName;
+  final int grandTotal;
+  final FulfillmentMethod method;
+  PlacedOrder({required this.id, required this.storeId, required this.storeName, required this.grandTotal, required this.method});
+}
+
+class CheckoutResult {
+  final String code;
+  final List<PlacedOrder> orders;
+  CheckoutResult({required this.code, required this.orders});
+}
+
 class ApiClient {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://localhost:3000/api/v1'));
 
@@ -98,5 +165,197 @@ class ApiClient {
   Future<List<ProductMock>> getStoreProducts(String storeId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     return productsMock.where((p) => p.storeId == storeId && p.status == 'published').toList();
+  }
+
+  // --- Cart multi-toko (in-memory dummy, shared antar layar) ---
+  static final List<CartLine> _cart = [
+    CartLine(id: 'cart-1', variantId: 'var-01a', quantity: 2),
+    CartLine(id: 'cart-2', variantId: 'var-04a', quantity: 1),
+  ];
+  static final Map<String, int> _stockOv = {};
+  static int _seq = 2;
+
+  int _stockOf(String variantId, int base) => _stockOv[variantId] ?? base;
+
+  ({ProductMock p, VariantMock v, StoreMock? s})? _resolve(String variantId) {
+    for (final p in productsMock) {
+      for (final v in p.variants) {
+        if (v.id == variantId) {
+          StoreMock? s;
+          try {
+            s = storesMock.firstWhere((x) => x.id == p.storeId);
+          } catch (_) {}
+          return (p: p, v: v, s: s);
+        }
+      }
+    }
+    return null;
+  }
+
+  CartDetailed _detail(CartLine c) {
+    final r = _resolve(c.variantId);
+    if (r == null) {
+      return CartDetailed(id: c.id, variantId: c.variantId, quantity: c.quantity,
+        productId: '', productName: '(varian dihapus)', storeId: '', storeName: '-',
+        variantLabel: c.variantId, unitPrice: 0, stock: 0, blockReason: 'Varian tidak ditemukan.');
+    }
+    final stock = _stockOf(r.v.id, r.v.stock);
+    String? blocked;
+    if (r.p.status != 'published') {
+      blocked = 'Produk disembunyikan.';
+    } else if (r.s == null || r.s!.status != 'active') {
+      blocked = 'Toko nonaktif.';
+    } else if (stock <= 0) {
+      blocked = 'Stok habis.';
+    }
+    return CartDetailed(id: c.id, variantId: c.variantId, quantity: c.quantity,
+      productId: r.p.id, productName: r.p.name, storeId: r.p.storeId,
+      storeName: r.s?.name ?? '-', variantLabel: r.v.label, unitPrice: r.v.price,
+      stock: stock, blockReason: blocked);
+  }
+
+  Future<List<CartDetailed>> getCartDetailed() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _cart.map(_detail).toList();
+  }
+
+  Future<void> addToCart(String variantId, [int qty = 1]) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    final r = _resolve(variantId);
+    if (r == null) throw Exception('Varian tidak ditemukan.');
+    if (r.p.status != 'published') throw Exception('Produk disembunyikan.');
+    if (r.s == null || r.s!.status != 'active') throw Exception('Toko nonaktif — tidak bisa checkout.');
+    final stock = _stockOf(r.v.id, r.v.stock);
+    if (stock <= 0) throw Exception('Stok habis.');
+    CartLine? ex;
+    try {
+      ex = _cart.firstWhere((c) => c.variantId == variantId);
+    } catch (_) {}
+    final want = (ex?.quantity ?? 0) + qty;
+    if (want > stock) throw Exception('Sisa stok $stock.');
+    if (ex != null) {
+      ex.quantity = want;
+    } else {
+      _cart.add(CartLine(id: 'cart-${DateTime.now().millisecondsSinceEpoch}', variantId: variantId, quantity: qty));
+    }
+  }
+
+  Future<void> updateCartItemQty(String id, int qty) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    final i = _cart.indexWhere((c) => c.id == id);
+    if (i < 0) throw Exception('Item tidak ada di keranjang.');
+    if (qty <= 0) {
+      _cart.removeAt(i);
+      return;
+    }
+    final r = _resolve(_cart[i].variantId);
+    if (r != null && qty > _stockOf(r.v.id, r.v.stock)) throw Exception('Sisa stok ${_stockOf(r.v.id, r.v.stock)}.');
+    _cart[i].quantity = qty;
+  }
+
+  Future<void> removeCartItem(String id) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    _cart.removeWhere((c) => c.id == id);
+  }
+
+  // --- Checkout dummy: hitung server-side, atomik ---
+  CheckoutPreview validateCheckout({
+    required List<CartLine> items,
+    required Map<String, FulfillmentMethod> methods,
+    required Map<String, String> locations,
+    String? voucherCode,
+  }) {
+    final errors = <String>[];
+    final lines = items.map(_detail).toList();
+    for (final l in lines) {
+      if (l.productId.isEmpty) {
+        errors.add('Varian ${l.variantId} tidak ditemukan.');
+      } else if (l.blockReason != null) {
+        errors.add('${l.productName} (${l.variantLabel}): ${l.blockReason}');
+      } else if (l.quantity > l.stock) {
+        errors.add('${l.productName} (${l.variantLabel}): sisa ${l.stock}.');
+      }
+    }
+    final byStore = <String, List<CartDetailed>>{};
+    for (final l in lines) {
+      if (l.storeId.isEmpty) continue;
+      (byStore[l.storeId] ??= []).add(l);
+    }
+    if (byStore.isEmpty && errors.isEmpty) errors.add('Keranjang kosong.');
+    for (final sid in byStore.keys) {
+      final m = methods[sid];
+      StoreMock? st;
+      try {
+        st = storesMock.firstWhere((x) => x.id == sid);
+      } catch (_) {}
+      if (m == null) {
+        errors.add('Pilih pickup/diantar untuk toko ${st?.name ?? sid}.');
+      } else if (m == FulfillmentMethod.merchantDelivery) {
+        if (st == null || !st.deliveryAvailable) {
+          errors.add('${st?.name ?? sid} tidak melayani pengantaran.');
+        } else if ((locations[sid] ?? '').trim().isEmpty) {
+          errors.add('Isi lokasi serah terima untuk ${st?.name ?? sid}.');
+        }
+      }
+    }
+    final subtotal = lines.fold(0, (s, l) => s + l.lineTotal);
+    var discount = 0;
+    final code = voucherCode?.trim().toUpperCase();
+    if (code != null && code.isNotEmpty) {
+      if (code == 'HEMAT5K' && subtotal >= 30000) {
+        discount = 5000;
+      } else if (code == 'KADALUARSA') {
+        errors.add('Voucher: Voucher kedaluwarsa');
+      } else if (code == 'HEMAT5K') {
+        errors.add('Voucher: Min. belanja 30000');
+      } else {
+        errors.add('Voucher: Voucher tidak ditemukan / nonaktif');
+      }
+    }
+    if (errors.isNotEmpty) throw Exception(errors.join(' '));
+
+    final sids = byStore.keys.toList();
+    var acc = 0;
+    final perStore = <StoreBreakdown>[];
+    for (var idx = 0; idx < sids.length; idx++) {
+      final sid = sids[idx];
+      final ls = byStore[sid]!;
+      final st = storesMock.firstWhere((x) => x.id == sid);
+      final sub = ls.fold(0, (s, l) => s + l.lineTotal);
+      final d = idx < sids.length - 1 ? (discount * sub / subtotal).round() : discount - acc;
+      acc += d;
+      final fee = methods[sid] == FulfillmentMethod.pickup ? 0 : st.deliveryFee;
+      perStore.add(StoreBreakdown(storeId: sid, storeName: st.name, subtotal: sub,
+        discount: d, deliveryFee: fee, method: methods[sid]!));
+    }
+    return CheckoutPreview(perStore: perStore, subtotal: subtotal, discountTotal: discount);
+  }
+
+  Future<CheckoutResult> checkout({
+    required Map<String, FulfillmentMethod> methods,
+    required Map<String, String> locations,
+    String? voucherCode,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    final prev = validateCheckout(items: List.of(_cart), methods: methods,
+      locations: locations, voucherCode: voucherCode);
+    // Mutasi stok (atomik: hanya setelah validasi lolos).
+    for (final ps in prev.perStore) {
+      for (final l in _cart.where((c) {
+        final r = _resolve(c.variantId);
+        return r != null && r.p.storeId == ps.storeId;
+      })) {
+        final r = _resolve(l.variantId)!;
+        _stockOv[r.v.id] = _stockOf(r.v.id, r.v.stock) - l.quantity;
+      }
+    }
+    _seq++;
+    final code = 'SQN-2026-${_seq.toString().padLeft(4, '0')}';
+    final orders = prev.perStore.map((ps) => PlacedOrder(
+      id: 'ord-${DateTime.now().millisecondsSinceEpoch}-${ps.storeId}',
+      storeId: ps.storeId, storeName: ps.storeName,
+      grandTotal: ps.total, method: ps.method)).toList();
+    _cart.clear();
+    return CheckoutResult(code: code, orders: orders);
   }
 }

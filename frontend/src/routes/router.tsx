@@ -10,6 +10,7 @@ import { RegisterPage } from '../pages/RegisterPage.js';
 import { ProfilePage } from '../pages/ProfilePage.js';
 import { CartPage } from '../pages/CartPage.js';
 import { CheckoutPage } from '../pages/CheckoutPage.js';
+import { CheckoutSuccessPage } from '../pages/CheckoutSuccessPage.js';
 import { OrdersPage } from '../pages/OrdersPage.js';
 import { OrderDetailPage } from '../pages/OrderDetailPage.js';
 import { WishlistPage, ChatPage, BecomeMerchantPage, MerchantDashboard, AdminDashboard } from '../pages/MiscPages.js';
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/cart', element: <RequireAuth><CartPage /></RequireAuth> },
       { path: '/checkout', element: <RequireAuth><CheckoutPage /></RequireAuth> },
+      { path: '/checkout/success/:checkoutId', element: <RequireAuth><CheckoutSuccessPage /></RequireAuth> },
       { path: '/orders', element: <RequireAuth><OrdersPage /></RequireAuth> },
       { path: '/orders/:orderId', element: <RequireAuth><OrderDetailPage /></RequireAuth> },
       { path: '/wishlist', element: <RequireAuth><WishlistPage /></RequireAuth> },

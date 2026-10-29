@@ -29,10 +29,10 @@ Centang `[x]` saat demo lolos di web **dan** Flutter (kecuali admin — web saja
 
 ## M3 — Cart + checkout dummy · issue #3
 
-- [ ] Cart multi-toko, ubah qty, hapus; persist localStorage
-- [ ] Checkout: pilih pickup/delivery per toko, input lokasi, kode voucher (valid/expired/min-subtotal)
-- [ ] Simulasi `POST /checkout`: hitung server-side di helper, 1 checkout → N orders, kurangi stok, kosongkan cart, gagal atomik jika stok kurang
-- [ ] Ringkasan multi-merchant + tolak 1 order tidak batalkan lain (UI)
+- [x] Cart multi-toko, ubah qty, hapus; persist localStorage
+- [x] Checkout: pilih pickup/delivery per toko, input lokasi, kode voucher (valid/expired/min-subtotal)
+- [x] Simulasi `POST /checkout`: hitung server-side di helper, 1 checkout → N orders, kurangi stok, kosongkan cart, gagal atomik jika stok kurang
+- [x] Ringkasan multi-merchant + tolak 1 order tidak batalkan lain (UI)
 
 ## M4 — Pesanan + COD dummy · issue #4
 
