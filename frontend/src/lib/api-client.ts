@@ -1219,6 +1219,36 @@ export const api = {
     logAdmin('send_password_recovery', 'user', userId, { email: u.email });
     return { ok: true as const, message: `Tautan pemulihan dikirim ke ${u.email} (dummy).` };
   },
+  async deleteAdminUser(userId: string) {
+    requireAdmin();
+    await delay(300);
+    const u = allUsers().find((x) => x.id === userId);
+    if (!u) throw new Error('Pengguna tidak ditemukan.');
+    if (u.role === 'admin') throw new Error('Akun admin tidak dapat dihapus.');
+
+    // Cek apakah user memiliki pesanan aktif yang belum selesai
+    const activeOrders = allOrders().filter(
+      (o) => (o.buyer_id === userId || (u.store_id && o.store_id === u.store_id)) &&
+             !['completed', 'cancelled', 'rejected'].includes(o.status)
+    );
+    if (activeOrders.length > 0) {
+      throw new Error(`Gagal: Pengguna memiliki ${activeOrders.length} pesanan COD aktif yang belum selesai.`);
+    }
+
+    // Anonimisasi data user (simulasi mock)
+    const ov = readJSON<Record<string, Partial<MockUser>>>('souqna:profile-overrides', {});
+    ov[userId] = {
+      ...ov[userId],
+      full_name: 'Pengguna Dinonaktifkan (Anonim)',
+      email: `anonymized-${userId}@souqna.id`,
+      phone: undefined,
+      default_location: undefined,
+    };
+    writeJSON('souqna:profile-overrides', ov);
+
+    logAdmin('delete_user', 'user', userId, { anonymized: true, previous_email: u.email });
+    return { ok: true as const, message: `Akun ${u.email} berhasil dinonaktifkan dan dianonimisasi (Simulasi).` };
+  },
   async getAdminCategories() {
     requireAdmin();
     await delay(150);

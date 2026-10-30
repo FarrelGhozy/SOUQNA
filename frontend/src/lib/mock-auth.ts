@@ -11,11 +11,24 @@ const KEY = 'souqna:session';
 const EXTRA_KEY = 'souqna:extra-users';
 const OVERRIDES_KEY = 'souqna:profile-overrides';
 
+const memoryStore = new Map<string, string>();
+const storage = {
+  getItem: (k: string) => (typeof localStorage !== 'undefined' ? localStorage.getItem(k) : memoryStore.get(k) ?? null),
+  setItem: (k: string, v: string) => {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(k, v);
+    else memoryStore.set(k, v);
+  },
+  removeItem: (k: string) => {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(k);
+    else memoryStore.delete(k);
+  },
+};
+
 type Override = Partial<Pick<MockUser, 'full_name' | 'phone' | 'default_location' | 'hasStore' | 'store_id'>>;
 
 function read<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch { return null; }
 }
@@ -34,7 +47,7 @@ function applyOverride(u: MockUser): MockUser {
 }
 
 function saveSession(u: MockUser) {
-  localStorage.setItem(KEY, JSON.stringify(u));
+  storage.setItem(KEY, JSON.stringify(u));
 }
 
 const emailOf = (email: string) => email.trim().toLowerCase();
@@ -70,7 +83,7 @@ export function loginWithEmail(email: string): MockUser {
   };
   const all = extraUsers();
   all.push(u);
-  localStorage.setItem(EXTRA_KEY, JSON.stringify(all));
+  storage.setItem(EXTRA_KEY, JSON.stringify(all));
   saveSession(u);
   return u;
 }
@@ -85,7 +98,7 @@ export function register(name: string, email: string): MockUser {
   // Simpan override nama agar persist antar sesi.
   const ov = overrides();
   ov[u.id] = { ...ov[u.id], full_name: u.full_name };
-  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
+  storage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
   saveSession(u);
   return u;
 }
@@ -104,13 +117,13 @@ export function updateProfile(patch: Override): MockUser {
   if (patch.full_name !== undefined && !patch.full_name.trim()) throw new Error('Nama tidak boleh kosong.');
   const ov = overrides();
   ov[s.id] = { ...ov[s.id], ...patch };
-  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
+  storage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
   const u = applyOverride(s);
   saveSession(u);
   return u;
 }
 
-export function logout() { localStorage.removeItem(KEY); }
+export function logout() { storage.removeItem(KEY); }
 
 /** Tandai sesi punya toko (dipanggil setelah createMyStore sukses). */
 export function attachStore(storeId: string): MockUser {
@@ -118,16 +131,16 @@ export function attachStore(storeId: string): MockUser {
   if (!s) throw new Error('Belum login.');
   const ov = overrides();
   ov[s.id] = { ...ov[s.id], hasStore: true, store_id: storeId };
-  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
+  storage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
   // Sinkronkan juga bila user ada di extra-users (akun buyer baru).
   try {
-    const raw = localStorage.getItem(EXTRA_KEY);
+    const raw = storage.getItem(EXTRA_KEY);
     if (raw) {
       const arr = JSON.parse(raw) as MockUser[];
       const i = arr.findIndex((u) => u.id === s.id);
       if (i >= 0) {
         arr[i] = { ...arr[i], hasStore: true, store_id: storeId };
-        localStorage.setItem(EXTRA_KEY, JSON.stringify(arr));
+        storage.setItem(EXTRA_KEY, JSON.stringify(arr));
       }
     }
   } catch { /* abaikan */ }

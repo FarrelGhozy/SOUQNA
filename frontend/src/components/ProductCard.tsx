@@ -32,6 +32,7 @@ export function ProductCard({ p }: { p: Product }) {
         <img
           src={p.image_url}
           alt={p.name}
+          className="product-img"
           loading="lazy"
           style={{
             width: '100%',

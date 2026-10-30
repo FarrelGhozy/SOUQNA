@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge.js';
 import { Alert } from '../components/ui/Alert.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { StoreIcon } from '../components/ui/Icons.js';
 
 export function ProfilePage() {
   const nav = useNavigate();
@@ -148,7 +149,10 @@ export function ProfilePage() {
         <div className="card" style={{ padding: 'var(--space-4)', background: 'var(--info-soft)', borderColor: 'rgba(3, 105, 161, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <strong style={{ color: 'var(--info)', fontSize: '15px' }}>🏪 Anda Terdaftar sebagai Merchant</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--info)' }}>
+                <StoreIcon size={18} />
+                <strong style={{ fontSize: '15px' }}>Anda Terdaftar sebagai Merchant</strong>
+              </div>
               <div style={{ fontSize: '13px', color: 'var(--unida-navy)', marginTop: 2 }}>
                 Kelola produk, varian, dan pesanan masuk melalui panel merchant.
               </div>

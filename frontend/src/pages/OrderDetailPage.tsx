@@ -8,6 +8,7 @@ import { OrderStatusBadge, PaymentBadge, DeliveryBadge } from '../components/ui/
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { Alert } from '../components/ui/Alert.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { CheckIcon } from '../components/ui/Icons.js';
 
 export function OrderDetailPage() {
   const { orderId } = useParams();
@@ -178,7 +179,8 @@ export function OrderDetailPage() {
             )}
             {isBuyer && handed && (
               <Button variant="primary" size="md" disabled={busy} onClick={() => act('confirm-received', 'Konfirmasi Penerimaan')}>
-                ✓ Saya Sudah Menerima Barang
+                <CheckIcon size={16} />
+                <span>Saya Sudah Menerima Barang</span>
               </Button>
             )}
 
@@ -205,7 +207,8 @@ export function OrderDetailPage() {
             )}
             {isMerchant && order.payment_status === 'unpaid' && (
               <Button variant="gold" size="md" disabled={busy} onClick={() => act('mark-paid', 'Tandai Lunas COD')}>
-                💰 Konfirmasi Pembayaran Tunai (Lunas)
+                <CheckIcon size={16} />
+                <span>Konfirmasi Pembayaran Tunai (Lunas)</span>
               </Button>
             )}
           </div>

@@ -7,6 +7,7 @@ import { Input, Textarea } from '../components/ui/Input.js';
 import { Alert } from '../components/ui/Alert.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { StoreIcon } from '../components/ui/Icons.js';
 
 export function BecomeMerchantPage() {
   const nav = useNavigate();
@@ -45,7 +46,9 @@ export function BecomeMerchantPage() {
     return (
       <div style={{ maxWidth: 640, margin: 'var(--space-6) auto' }}>
         <div className="card" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
-          <div style={{ fontSize: '32px', marginBottom: 'var(--space-2)' }}>🏪</div>
+          <div style={{ color: 'var(--unida-blue)', marginBottom: 'var(--space-2)' }}>
+            <StoreIcon size={36} />
+          </div>
           <h1 style={{ fontSize: '22px', color: 'var(--unida-navy)' }}>Anda Sudah Memiliki Toko</h1>
           <p style={{ color: 'var(--muted)', fontSize: '14px', margin: 'var(--space-2) 0 var(--space-4) 0' }}>
             Akun Anda terhubung dengan toko <strong>{existing.name}</strong>. Sistem saat ini membatasi 1 toko per akun.

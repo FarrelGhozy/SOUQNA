@@ -8,6 +8,7 @@ import { OrderStatusBadge, PaymentBadge, DeliveryBadge } from '../components/ui/
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { Alert } from '../components/ui/Alert.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
+import { TruckIcon } from '../components/ui/Icons.js';
 
 type MerchantOrderTab = 'all' | 'pending' | 'active' | 'completed' | 'cancelled';
 
@@ -119,8 +120,9 @@ export function MerchantOrdersPage() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
                 <DeliveryBadge method={o.delivery_method} />
                 {o.handover_location_snapshot && (
-                  <span style={{ fontSize: '13px', color: 'var(--unida-text)' }}>
-                    📍 Titik Antar: <strong>{o.handover_location_snapshot}</strong>
+                  <span style={{ fontSize: '13px', color: 'var(--unida-text)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <TruckIcon size={16} />
+                    <span>Titik Antar: <strong>{o.handover_location_snapshot}</strong></span>
                   </span>
                 )}
               </div>

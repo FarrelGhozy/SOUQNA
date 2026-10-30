@@ -8,6 +8,7 @@ import { OrderStatusBadge, PaymentBadge, DeliveryBadge } from '../components/ui/
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { Alert } from '../components/ui/Alert.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
+import { TruckIcon } from '../components/ui/Icons.js';
 
 type TabFilter = 'all' | 'pending' | 'in_progress' | 'completed' | 'cancelled';
 
@@ -130,8 +131,9 @@ export function OrdersPage() {
                 <DeliveryBadge method={o.delivery_method} />
                 <PaymentBadge status={o.payment_status} />
                 {o.handover_location_snapshot && (
-                  <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                    📍 {o.handover_location_snapshot}
+                  <span style={{ fontSize: '12px', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <TruckIcon size={14} />
+                    <span>{o.handover_location_snapshot}</span>
                   </span>
                 )}
               </div>

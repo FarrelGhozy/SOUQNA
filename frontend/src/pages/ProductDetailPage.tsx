@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge.js';
 import { Alert } from '../components/ui/Alert.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { ChatIcon, HeartIcon, StarIcon } from '../components/ui/Icons.js';
 
 export function ProductDetailPage() {
   const { productId } = useParams();
@@ -219,7 +220,8 @@ export function ProductDetailPage() {
                   </div>
                 </div>
                 <Button variant="secondary" size="sm" onClick={handleChatStore}>
-                  💬 Chat Toko
+                  <ChatIcon size={16} />
+                  <span>Chat Toko</span>
                 </Button>
               </div>
             </div>
@@ -240,8 +242,9 @@ export function ProductDetailPage() {
                 <Badge variant="success">Tersedia</Badge>
               )}
               {avgRating && (
-                <span style={{ fontSize: '13px', color: 'var(--warning)', fontWeight: 600 }}>
-                  ★ {avgRating} ({reviews.length} ulasan)
+                <span style={{ fontSize: '13px', color: 'var(--warning)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <StarIcon size={14} fill="var(--warning)" />
+                  <span>{avgRating} ({reviews.length} ulasan)</span>
                 </span>
               )}
             </div>
@@ -402,7 +405,8 @@ export function ProductDetailPage() {
               }}
               title={wished ? 'Hapus dari Wishlist' : 'Simpan ke Wishlist'}
             >
-              {wished ? '♥ Disimpan' : '♡ Wishlist'}
+              <HeartIcon size={16} fill={wished ? 'currentColor' : 'none'} />
+              <span>{wished ? 'Disimpan' : 'Wishlist'}</span>
             </Button>
           </div>
 

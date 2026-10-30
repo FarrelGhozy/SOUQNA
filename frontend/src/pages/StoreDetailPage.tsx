@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge.js';
 import { Alert } from '../components/ui/Alert.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { ChatIcon } from '../components/ui/Icons.js';
 
 export function StoreDetailPage() {
   const { storeId } = useParams();
@@ -134,7 +135,8 @@ export function StoreDetailPage() {
           </div>
 
           <Button variant="primary" size="md" onClick={handleChat}>
-            💬 Chat Penjual
+            <ChatIcon size={16} />
+            <span>Chat Penjual</span>
           </Button>
         </div>
 

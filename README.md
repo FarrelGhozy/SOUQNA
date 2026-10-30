@@ -11,11 +11,12 @@ gate — bukan menambah fitur di luar MVP.
 
 | Area | Status |
 |---|---|
-| Web React + Vite + React Router | Demo mock M1–M7 berjalan |
-| Flutter Android | Struktur + layar mock M1–M6; SDK belum terpasang di mesin dev ini |
-| Backend Express + Drizzle + Supabase | **Deferred** — stub |
+| Web React + Vite + React Router | **Stabil v1.0.0-demo** — M0 s/d M12 selesai |
+| Flutter Android | Struktur + layar mock M1–M6; SDK siap di CI & workstation |
+| Backend Express + Drizzle + Supabase | **Deferred** — stub (mock-first prototype) |
 | Auth/DB/Storage real | **Deferred** |
-| Tema Biru UNIDA Gontor | Dirancang di `docs/design-system.md`; implementasi di M10–M11 |
+| Tema Biru UNIDA Gontor | Selesai & aktif di web & Flutter (`docs/design-system.md`) |
+| Quality Gates & Test Suite | **18 unit tests lolos**, typecheck 0 errors, CI GitHub Actions aktif |
 
 Rincian gap dan status per kapabilitas: `docs/implementation-audit.md`.
 Pekerjaan aktif: `TODO.md`. Issue: GitHub #9–#21.
@@ -52,11 +53,10 @@ Axios dan Dio sudah dideklarasikan sebagai transport cadangan, tetapi
 # Web (Bun)
 cd frontend
 bun install
-bun run dev      # http://localhost:5173
-bun run build
-bunx tsc --noEmit
+bun run dev         # http://localhost:5173
+bun run verify      # Jalankan typecheck + 18 unit tests + build produksi
 
-# Cek parity/demo tanpa backend
+# Cek parity & quality gate E2E lengkap
 ./scripts/demo-e2e.sh
 
 # Android (setelah Flutter SDK terpasang)

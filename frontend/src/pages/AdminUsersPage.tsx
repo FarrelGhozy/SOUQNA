@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button.js';
 import { Badge } from '../components/ui/Badge.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { Alert } from '../components/ui/Alert.js';
+import { Modal } from '../components/ui/Modal.js';
 import { useToast } from '../components/ui/ToastContext.js';
 
 export function AdminUsersPage() {
@@ -13,6 +14,8 @@ export function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<MockUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
 
   const load = async () => {
@@ -39,6 +42,21 @@ export function AdminUsersPage() {
       toast.error(e instanceof Error ? e.message : 'Gagal mengirim link recovery.');
     } finally {
       setSendingId(null);
+    }
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    try {
+      const res = await api.deleteAdminUser(userToDelete.id);
+      toast.success(res.message);
+      setUserToDelete(null);
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Gagal menghapus pengguna.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -117,14 +135,27 @@ export function AdminUsersPage() {
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      loading={sendingId === u.id}
-                      onClick={() => handleSendRecovery(u)}
-                    >
-                      Kirim Reset Password
-                    </Button>
+                    <div style={{ display: 'inline-flex', gap: 6 }}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={sendingId === u.id}
+                        onClick={() => handleSendRecovery(u)}
+                        title="Kirim link reset password ke email dummy"
+                      >
+                        Reset Password
+                      </Button>
+                      {u.role !== 'admin' && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => setUserToDelete(u)}
+                          title="Hapus / Anonimisasi akun"
+                        >
+                          Hapus Akun
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -132,6 +163,36 @@ export function AdminUsersPage() {
           </table>
         </div>
       )}
+
+      {/* Modal Konfirmasi Hapus Akun */}
+      <Modal
+        isOpen={Boolean(userToDelete)}
+        onClose={() => setUserToDelete(null)}
+        title="Konfirmasi Penghapusan Akun"
+      >
+        <div>
+          <Alert variant="warning">
+            <strong>Perhatian: Simulasi Penghapusan Akun Mock</strong>
+            <p style={{ fontSize: '13px', margin: '4px 0 0 0' }}>
+              Sesuai aturan keamanan bisnis SOUQNA, akun tidak dapat dihapus jika masih memiliki pesanan COD yang sedang berjalan.
+              Jika disetujui, akun akan dinonaktifkan dan data pribadi dianonimisasi, namun riwayat transaksi selesai tetap tersimpan untuk audit.
+            </p>
+          </Alert>
+
+          <p style={{ fontSize: '14px', margin: 'var(--space-3) 0' }}>
+            Apakah Anda yakin ingin menonaktifkan akun <strong>{userToDelete?.full_name}</strong> ({userToDelete?.email})?
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 'var(--space-4)' }}>
+            <Button variant="secondary" size="md" onClick={() => setUserToDelete(null)} disabled={deleting}>
+              Batal
+            </Button>
+            <Button variant="danger" size="md" loading={deleting} onClick={confirmDeleteUser}>
+              Ya, Hapus & Anonimkan
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

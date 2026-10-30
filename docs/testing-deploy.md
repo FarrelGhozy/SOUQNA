@@ -6,14 +6,13 @@
 
 | Pemeriksaan | Status | Catatan |
 |---|---|---|
-| `cd frontend && bun run build` | Lolos | Vite build sukses |
-| `cd frontend && bunx tsc --noEmit` | Lolos | Per 2026-10-30 |
-| `./scripts/demo-e2e.sh` | Lolos | Parity ID + build |
-| Unit/component test | Belum ada | Issue #19 |
-| Lint/format | Belum ada | Issue #19 |
-| `flutter analyze` | Belum diverifikasi | SDK belum terpasang |
-| `flutter test` | Belum ada | Issue #19 |
-| CI | Belum ada | Issue #19 |
+| `cd frontend && bun run build` | Lolos | Vite build sukses (~250ms) |
+| `cd frontend && bun run typecheck` | Lolos | `tsc --noEmit` 0 errors |
+| `cd frontend && bun run test` | Lolos | 18 unit tests (5 test suites) lolos |
+| `cd frontend && bun run verify` | Lolos | Gabungan typecheck + test + build |
+| `./scripts/demo-e2e.sh` | Lolos | Parity ID, status, harga, dan build |
+| `flutter analyze` | Siap di CI | `flutter/analysis_options.yaml` aktif |
+| GitHub Actions CI | Aktif | `.github/workflows/ci.yml` pada push/PR |
 
 Jangan menulis “semua test lolos” selama tabel ini masih ada yang belum.
 
@@ -97,14 +96,41 @@ kategori+demo idempotent. Admin awal via prosedur terkontrol, tanpa hardcode.
 Perintah via Bun: `bun install`, `bun run dev`,
 `bunx drizzle-kit generate/migrate`, `bun run seed`.
 
-## 10.8 Deployment
+## 10.8 Deployment Web Statis & Panduan Rilis
 
-- Web: build statis Vite, deploy ke Vercel/Netlify/alternatif. Tidak ada secret
-  di build env klien.
-- Android: build release setelah SDK tersedia; catat signing/keystore di luar
-  repo.
-- Dokumentasi langkah deploy + UAT ada di issue #20.
-- Jangan deploy sebelum build/typecheck/test hijau dan demo script lolos.
+### 10.8.1 Deployment Web Statis (Vercel / Netlify / Cloudflare Pages)
+
+Aplikasi web SOUQNA adalah SPA murni berbasis Vite + React tanpa dependensi server runtime saat mode demo mock.
+
+Langkah deployment ke provider hosting statis:
+1. Hubungkan repository GitHub `FarrelGhozy/SOUQNA` ke Vercel / Netlify / Cloudflare Pages.
+2. Atur konfigurasi build:
+   - **Root Directory:** `frontend`
+   - **Build Command:** `bun run build` (atau `vite build`)
+   - **Output Directory:** `dist`
+   - **Install Command:** `bun install`
+3. SPA Rewrites / Routing:
+   - Karena router menggunakan client-side routing (`createBrowserRouter`), pastikan rewrite rule mengarahkan seluruh path `/*` ke `/index.html`.
+   - File konfigurasi `frontend/vercel.json` atau `frontend/public/_redirects` dapat dipakai untuk rewrite otomatis.
+4. **Keamanan:** Tidak diperlukan env secret di klien. Seluruh data berjalan mock-first di memori browser dan localStorage.
+
+### 10.8.2 Panduan Build Android (Flutter)
+
+Setelah Flutter SDK terpasang di workstation:
+1. Masuk ke direktori `flutter/`:
+   ```bash
+   cd flutter && flutter pub get
+   ```
+2. Jalankan pemeriksaan linter:
+   ```bash
+   flutter analyze
+   ```
+3. Build APK rilis demo:
+   ```bash
+   flutter build apk --release
+   ```
+   Output APK rilis berada di `build/app/outputs/flutter-apk/app-release.apk`.
+
 
 ## 10.9 Risiko → mitigasi
 

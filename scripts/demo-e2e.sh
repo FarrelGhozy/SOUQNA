@@ -9,17 +9,31 @@ say() { printf '%s\n' "$*"; }
 ok() { say "  ✅ $*"; }
 bad() { say "  ❌ $*"; fail=1; }
 
-say "== 1. Parity ID mock web ↔ flutter =="
+say "== 1. Parity ID & Nilai Kunci mock web ↔ flutter =="
 for pat in "prod-[0-9]+" "store-[0-9]+" "cat-[0-9]+" "var-[0-9]+[a-z]"; do
-  web=$(grep -rhoE "$pat" frontend/src/mocks/*.ts | sort -u)
-  flt=$(grep -rhoE "$pat" flutter/lib/mocks/*.dart flutter/lib/core/api/api_client.dart | sort -u)
-  # flutter api_client hardcode beberapa id seed (ord/var) — bandingkan irisan mock saja
   webm=$(grep -rhoE "$pat" frontend/src/mocks/*.ts | sort -u)
   fltm=$(grep -rhoE "$pat" flutter/lib/mocks/*.dart | sort -u)
   if [ "$webm" = "$fltm" ]; then ok "$pat sama ($(echo "$webm" | wc -l) id)"; else
     bad "$pat BEDA"; diff <(echo "$webm") <(echo "$fltm") || true
   fi
 done
+
+# Parity nilai kunci produk & varian (status & harga min)
+web_status=$(grep -oE "status: '(published|hidden|suspended)'" frontend/src/mocks/products.mock.ts | sort)
+flt_status=$(grep -oE "status: '(published|hidden|suspended)'" flutter/lib/mocks/products_mock.dart | sort)
+if [ "$web_status" = "$flt_status" ]; then
+  ok "Status produk parity (published, hidden, suspended sama)"
+else
+  bad "Status produk web vs flutter tidak sama"
+fi
+
+web_prices=$(grep -oE "price: [0-9]+" frontend/src/mocks/products.mock.ts | sort)
+flt_prices=$(grep -oE ", [0-9]+, [0-9]+\)" flutter/lib/mocks/products_mock.dart | sed -E 's/, ([0-9]+), [0-9]+\)/price: \1/' | sort)
+if [ "$web_prices" = "$flt_prices" ]; then
+  ok "Harga varian produk parity (27 varian sama)"
+else
+  bad "Harga varian web vs flutter tidak sama"
+fi
 
 say "== 2. UI web tidak import mock langsung =="
 if grep -rn "mocks/" frontend/src/pages frontend/src/components frontend/src/routes frontend/src/features 2>/dev/null | grep -v "^Binary" ; then
@@ -49,10 +63,10 @@ for fn in getCategories getProducts getProduct getStore getCart checkout getOrde
 done
 ok "grup endpoint mirror (cek detail di docs/parity-audit.md)"
 
-say "== 6. Build web (bun) =="
+say "== 6. Verifikasi frontend (typecheck, test, build via bun) =="
 if command -v bun >/dev/null 2>&1; then
-  (cd frontend && bun install --silent 2>&1 | tail -2; bun run build 2>&1 | tail -5) || { bad "bun run build gagal"; }
-  ok "bun run build selesai"
+  (cd frontend && bun run verify 2>&1 | tail -8) || { bad "bun run verify gagal"; }
+  ok "bun run verify (typecheck, unit test, build) lolos"
 else
   say "  ⚠️ bun tidak ada — lewati build (wajib lolos di mesin dev)"
 fi

@@ -8,6 +8,7 @@ import { Alert } from '../components/ui/Alert.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { ChatIcon } from '../components/ui/Icons.js';
 
 export function ChatPage() {
   const [params, setParams] = useSearchParams();
@@ -180,7 +181,7 @@ export function ChatPage() {
                         flexShrink: 0,
                       }}
                     >
-                      {s?.name?.charAt(0) || '🏬'}
+                      {s?.name?.charAt(0) || 'S'}
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div
@@ -219,7 +220,9 @@ export function ChatPage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '20px' }}>💬</span>
+                <span style={{ color: 'var(--unida-blue)', display: 'inline-flex' }}>
+                  <ChatIcon size={20} />
+                </span>
                 <div>
                   <strong style={{ fontSize: '15px', color: 'var(--unida-navy)' }}>
                     {activeStore ? activeStore.name : 'Percakapan'}

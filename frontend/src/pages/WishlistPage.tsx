@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button.js';
 import { Alert } from '../components/ui/Alert.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { TrashIcon } from '../components/ui/Icons.js';
 
 export function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[]>([]);
@@ -88,9 +89,10 @@ export function WishlistPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleRemove(p.id)}
-                style={{ marginTop: 6, color: 'var(--danger)', fontSize: '12px' }}
+                style={{ marginTop: 6, color: 'var(--danger)', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                ✕ Hapus dari Wishlist
+                <TrashIcon size={14} />
+                <span>Hapus dari Wishlist</span>
               </Button>
             </div>
           ))}

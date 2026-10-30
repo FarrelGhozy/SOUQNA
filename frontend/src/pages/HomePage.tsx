@@ -6,6 +6,7 @@ import { ProductCard } from '../components/ProductCard.js';
 import { ProductCardSkeleton } from '../components/ui/Skeleton.js';
 import { Alert } from '../components/ui/Alert.js';
 import { Button } from '../components/ui/Button.js';
+import { ShieldIcon, TruckIcon, StoreIcon } from '../components/ui/Icons.js';
 
 export function HomePage() {
   const [cats, setCats] = useState<Category[]>([]);
@@ -218,21 +219,27 @@ export function HomePage() {
         }}
       >
         <div className="card" style={{ padding: 'var(--space-5)' }}>
-          <div style={{ fontSize: '24px', marginBottom: 'var(--space-2)' }}>🤝</div>
+          <div style={{ color: 'var(--unida-blue)', marginBottom: 'var(--space-2)' }}>
+            <ShieldIcon size={28} />
+          </div>
           <h3 style={{ fontSize: '16px', marginBottom: 'var(--space-1)' }}>Sistem COD Kampus</h3>
           <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
             Transaksi tanpa resiko transfer. Bayar tunai langsung saat pesanan diserahkan di titik temu kampus.
           </p>
         </div>
         <div className="card" style={{ padding: 'var(--space-5)' }}>
-          <div style={{ fontSize: '24px', marginBottom: 'var(--space-2)' }}>📍</div>
+          <div style={{ color: 'var(--unida-gold)', marginBottom: 'var(--space-2)' }}>
+            <TruckIcon size={28} />
+          </div>
           <h3 style={{ fontSize: '16px', marginBottom: 'var(--space-1)' }}>Ambil Sendiri / Antar</h3>
           <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
             Fleksibel! Ambil langsung ke gerai kantin/asrama atau pilih layanan antar merchant ke fakultas Anda.
           </p>
         </div>
         <div className="card" style={{ padding: 'var(--space-5)' }}>
-          <div style={{ fontSize: '24px', marginBottom: 'var(--space-2)' }}>🎓</div>
+          <div style={{ color: 'var(--unida-blue)', marginBottom: 'var(--space-2)' }}>
+            <StoreIcon size={28} />
+          </div>
           <h3 style={{ fontSize: '16px', marginBottom: 'var(--space-1)' }}>Ekonomi Civitas Mandiri</h3>
           <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
             Mendukung unit usaha mandiri mahasiswa, staf, dan pengusaha lokal sekitar Universitas Darussalam Gontor.

@@ -1,8 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { currentSession, logout } from '../lib/mock-auth.js';
 import { api } from '../lib/api-client.js';
 import { Badge } from '../components/ui/Badge.js';
+import { Footer } from '../components/Footer.js';
+import {
+  HomeIcon,
+  SearchIcon,
+  CartIcon,
+  OrdersIcon,
+  UserIcon,
+  StoreIcon,
+  DashboardIcon,
+  CategoryIcon,
+  VoucherIcon,
+  FileTextIcon,
+  PlusIcon,
+  SettingsIcon,
+} from '../components/ui/Icons.js';
 
 function Header() {
   const s = currentSession();
@@ -26,9 +41,10 @@ function Header() {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '6px 10px',
+    padding: '6px 12px',
     borderRadius: 'var(--radius-sm)',
-    transition: 'color var(--transition-fast)',
+    transition: 'color var(--transition-fast), background var(--transition-fast)',
+    background: isActive ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
   });
 
   return (
@@ -62,6 +78,7 @@ function Header() {
               alignItems: 'baseline',
               gap: 4,
             }}
+            aria-label="SOUQNA Beranda"
           >
             <span
               style={{
@@ -96,11 +113,12 @@ function Header() {
             gap: 4,
           }}
           className="desktop-nav"
+          aria-label="Navigasi Utama"
         >
           <NavLink to="/" style={navLinkStyle}>Beranda</NavLink>
           <NavLink to="/search" style={navLinkStyle}>Cari</NavLink>
           <NavLink to="/categories" style={navLinkStyle}>Kategori</NavLink>
-          <NavLink to="/cart" style={navLinkStyle}>
+          <NavLink to="/cart" style={navLinkStyle} aria-label={`Keranjang ${cartCount} item`}>
             Keranjang
             {cartCount > 0 && (
               <span
@@ -160,6 +178,7 @@ function Header() {
                   alignItems: 'center',
                   gap: 8,
                 }}
+                aria-label={`Profil ${s.full_name}`}
               >
                 <div
                   style={{
@@ -225,24 +244,28 @@ function MobileBottomNav() {
     flexDirection: 'column' as const,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 3,
     fontSize: '11px',
     fontWeight: isActive ? 700 : 500,
-    color: isActive ? 'var(--unida-gold)' : 'rgba(255,255,255,0.8)',
+    color: isActive ? 'var(--unida-gold)' : 'rgba(255,255,255,0.75)',
     textDecoration: 'none',
     position: 'relative' as const,
     flex: 1,
     height: '100%',
+    minHeight: 48,
+    transition: 'color var(--transition-fast)',
   });
 
   return (
     <nav
       className="mobile-bottom-nav"
+      aria-label="Navigasi Bawah Mobile"
       style={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 60,
+        height: 62,
         background: 'var(--unida-navy)',
         borderTop: '2px solid var(--unida-gold)',
         display: 'flex',
@@ -252,15 +275,15 @@ function MobileBottomNav() {
       }}
     >
       <NavLink to="/" style={navItemStyle}>
-        <span style={{ fontSize: '18px' }}>🏠</span>
+        <HomeIcon size={20} />
         <span>Beranda</span>
       </NavLink>
       <NavLink to="/search" style={navItemStyle}>
-        <span style={{ fontSize: '18px' }}>🔍</span>
+        <SearchIcon size={20} />
         <span>Cari</span>
       </NavLink>
       <NavLink to="/cart" style={navItemStyle}>
-        <span style={{ fontSize: '18px' }}>🛒</span>
+        <CartIcon size={20} />
         <span>Keranjang</span>
         {cartCount > 0 && (
           <span
@@ -281,11 +304,11 @@ function MobileBottomNav() {
         )}
       </NavLink>
       <NavLink to="/orders" style={navItemStyle}>
-        <span style={{ fontSize: '18px' }}>📦</span>
+        <OrdersIcon size={20} />
         <span>Pesanan</span>
       </NavLink>
       <NavLink to={s ? '/me' : '/login'} style={navItemStyle}>
-        <span style={{ fontSize: '18px' }}>👤</span>
+        <UserIcon size={20} />
         <span>{s ? 'Akun' : 'Masuk'}</span>
       </NavLink>
     </nav>
@@ -294,29 +317,33 @@ function MobileBottomNav() {
 
 export function PublicLayout() {
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <Header />
       <main id="main-content" className="container" style={{ padding: 'var(--space-6) var(--space-4)', flex: 1, paddingBottom: 80 }}>
         <Outlet />
       </main>
+      <Footer />
       <MobileBottomNav />
-    </>
+    </div>
   );
 }
 
 export function AccountLayout() {
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <Header />
       <main id="main-content" className="container" style={{ padding: 'var(--space-6) var(--space-4)', flex: 1, paddingBottom: 80 }}>
         <Outlet />
       </main>
+      <Footer />
       <MobileBottomNav />
-    </>
+    </div>
   );
 }
+
+const varSpace2 = 'var(--space-2)';
 
 export function MerchantLayout() {
   const s = currentSession();
@@ -335,7 +362,7 @@ export function MerchantLayout() {
   });
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <Header />
       <div className="container" style={{ display: 'flex', gap: 'var(--space-6)', padding: 'var(--space-6) var(--space-4)', flex: 1, paddingBottom: 80 }}>
@@ -353,6 +380,7 @@ export function MerchantLayout() {
             gap: 6,
           }}
           className="desktop-sidebar"
+          aria-label="Sidebar Merchant"
         >
           <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: varSpace2 }}>
             <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--unida-gold)', fontWeight: 700 }}>
@@ -362,11 +390,26 @@ export function MerchantLayout() {
               {s?.full_name}
             </div>
           </div>
-          <NavLink to="/merchant" end style={navItem}>📊 Ringkasan</NavLink>
-          <NavLink to="/merchant/products" style={navItem}>🛍️ Produk Toko</NavLink>
-          <NavLink to="/merchant/products/new" style={navItem}>➕ Tambah Produk</NavLink>
-          <NavLink to="/merchant/orders" style={navItem}>📦 Pesanan Masuk</NavLink>
-          <NavLink to="/merchant/store" style={navItem}>⚙️ Pengaturan Toko</NavLink>
+          <NavLink to="/merchant" end style={navItem}>
+            <DashboardIcon size={18} />
+            <span>Ringkasan</span>
+          </NavLink>
+          <NavLink to="/merchant/products" style={navItem}>
+            <StoreIcon size={18} />
+            <span>Produk Toko</span>
+          </NavLink>
+          <NavLink to="/merchant/products/new" style={navItem}>
+            <PlusIcon size={18} />
+            <span>Tambah Produk</span>
+          </NavLink>
+          <NavLink to="/merchant/orders" style={navItem}>
+            <OrdersIcon size={18} />
+            <span>Pesanan Masuk</span>
+          </NavLink>
+          <NavLink to="/merchant/store" style={navItem}>
+            <SettingsIcon size={18} />
+            <span>Pengaturan Toko</span>
+          </NavLink>
           <hr style={{ borderColor: 'rgba(255,255,255,0.15)', margin: '8px 0' }} />
           <Link to="/" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', padding: '8px 14px', textDecoration: 'none' }}>
             ← Kembali ke Pasar
@@ -377,12 +420,11 @@ export function MerchantLayout() {
           <Outlet />
         </main>
       </div>
+      <Footer />
       <MobileBottomNav />
-    </>
+    </div>
   );
 }
-
-const varSpace2 = 'var(--space-2)';
 
 export function AdminLayout() {
   const navItem = ({ isActive }: { isActive: boolean }) => ({
@@ -400,7 +442,7 @@ export function AdminLayout() {
   });
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <Header />
       <div className="container" style={{ display: 'flex', gap: 'var(--space-6)', padding: 'var(--space-6) var(--space-4)', flex: 1, paddingBottom: 80 }}>
@@ -418,6 +460,7 @@ export function AdminLayout() {
             gap: 6,
           }}
           className="desktop-sidebar"
+          aria-label="Sidebar Admin"
         >
           <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: varSpace2 }}>
             <Badge variant="gold">ADMIN PANEL</Badge>
@@ -425,13 +468,34 @@ export function AdminLayout() {
               SOUQNA Kampus
             </div>
           </div>
-          <NavLink to="/admin" end style={navItem}>📊 Dashboard</NavLink>
-          <NavLink to="/admin/users" style={navItem}>👥 Manajemen User</NavLink>
-          <NavLink to="/admin/categories" style={navItem}>📑 Kategori</NavLink>
-          <NavLink to="/admin/products" style={navItem}>🛍️ Moderasi Produk</NavLink>
-          <NavLink to="/admin/orders" style={navItem}>📦 Semua Pesanan</NavLink>
-          <NavLink to="/admin/vouchers" style={navItem}>🎟️ Voucher Promo</NavLink>
-          <NavLink to="/admin/audit-logs" style={navItem}>📋 Log Audit</NavLink>
+          <NavLink to="/admin" end style={navItem}>
+            <DashboardIcon size={18} />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink to="/admin/users" style={navItem}>
+            <UserIcon size={18} />
+            <span>Manajemen User</span>
+          </NavLink>
+          <NavLink to="/admin/categories" style={navItem}>
+            <CategoryIcon size={18} />
+            <span>Kategori</span>
+          </NavLink>
+          <NavLink to="/admin/products" style={navItem}>
+            <StoreIcon size={18} />
+            <span>Moderasi Produk</span>
+          </NavLink>
+          <NavLink to="/admin/orders" style={navItem}>
+            <OrdersIcon size={18} />
+            <span>Semua Pesanan</span>
+          </NavLink>
+          <NavLink to="/admin/vouchers" style={navItem}>
+            <VoucherIcon size={18} />
+            <span>Voucher Promo</span>
+          </NavLink>
+          <NavLink to="/admin/audit-logs" style={navItem}>
+            <FileTextIcon size={18} />
+            <span>Log Audit</span>
+          </NavLink>
           <hr style={{ borderColor: 'rgba(255,255,255,0.15)', margin: '8px 0' }} />
           <Link to="/" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', padding: '8px 14px', textDecoration: 'none' }}>
             ← Kembali ke Beranda
@@ -442,8 +506,9 @@ export function AdminLayout() {
           <Outlet />
         </main>
       </div>
+      <Footer />
       <MobileBottomNav />
-    </>
+    </div>
   );
 }
 

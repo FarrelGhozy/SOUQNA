@@ -10,6 +10,7 @@ import { Alert } from '../components/ui/Alert.js';
 import { Badge } from '../components/ui/Badge.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { StoreIcon, TruckIcon } from '../components/ui/Icons.js';
 
 export function CheckoutPage() {
   const nav = useNavigate();
@@ -189,7 +190,9 @@ export function CheckoutPage() {
                 <div key={sid} className="card">
                   <div className="card-header" style={{ background: 'var(--surface-muted)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: '16px' }}>🏬</span>
+                      <span style={{ color: 'var(--unida-blue)', display: 'inline-flex' }}>
+                        <StoreIcon size={16} />
+                      </span>
                       <strong style={{ color: 'var(--unida-navy)' }}>{storeName}</strong>
                     </div>
                     <Badge variant="muted">{sLines.length} produk</Badge>
@@ -218,7 +221,10 @@ export function CheckoutPage() {
                             cursor: 'pointer',
                           }}
                         >
-                          <div>📍 Ambil Sendiri</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <StoreIcon size={16} />
+                            <span>Ambil Sendiri</span>
+                          </div>
                           <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: 2 }}>Gratis di gerai merchant</div>
                         </button>
 
@@ -239,7 +245,10 @@ export function CheckoutPage() {
                             cursor: 'pointer',
                           }}
                         >
-                          <div>🛵 Diantar Merchant</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <TruckIcon size={16} />
+                            <span>Diantar Merchant</span>
+                          </div>
                           <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: 2 }}>Antar ke lokasi kampus</div>
                         </button>
                       </div>

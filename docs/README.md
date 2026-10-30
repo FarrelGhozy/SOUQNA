@@ -33,6 +33,9 @@ satunya harus diperbaiki lewat issue — lihat `implementation-audit.md`.
 | `ERD.md` | ERD final + kolom acuan `db/schema/*` | §8 final M8 |
 | `openapi.yaml` | Stub OpenAPI `/api/v1`; backend menyusul | §10 stub M8 |
 | `parity-audit.md` | Audit parity web↔Flutter; klaim yang sudah diverifikasi | M8 |
+| `accessibility-audit.md` | Audit aksesibilitas WCAG 2.2 AA & responsif web/Flutter | M12 |
+| `uat-checklist.md` | UAT checklist final alur pembeli, merchant, dan admin | M12 |
+| `release-notes-v1.0.0-demo.md` | Release notes demo v1.0.0-demo ringkasan fitur | M12 |
 | `demo-e2e.md` | Skenario demo manual + `./scripts/demo-e2e.sh` | M8 |
 | `../TODO.md` | Checklist kerja aktif + issue | turunan §14 |
 | `../AGENTS.md` | Aturan agen global | turunan §6–§7 |

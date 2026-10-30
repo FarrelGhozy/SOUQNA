@@ -7,6 +7,7 @@ import { StoreDetailPage } from '../pages/StoreDetailPage.js';
 import { CategoryListPage } from '../pages/CategoryListPage.js';
 import { LoginPage } from '../pages/LoginPage.js';
 import { RegisterPage } from '../pages/RegisterPage.js';
+import { ResetPasswordPage } from '../pages/ResetPasswordPage.js';
 import { ProfilePage } from '../pages/ProfilePage.js';
 import { CartPage } from '../pages/CartPage.js';
 import { CheckoutPage } from '../pages/CheckoutPage.js';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
     ],
   },
   {

@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge.js';
 import { EmptyState } from '../components/ui/EmptyState.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { useToast } from '../components/ui/ToastContext.js';
+import { StoreIcon, TrashIcon } from '../components/ui/Icons.js';
 
 export function CartPage() {
   const [lines, setLines] = useState<CartDetailed[]>([]);
@@ -132,7 +133,9 @@ export function CartPage() {
                   {/* Store Card Header */}
                   <div className="card-header" style={{ background: 'var(--surface-muted)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: '18px' }}>🏬</span>
+                      <span style={{ color: 'var(--unida-blue)', display: 'inline-flex' }}>
+                        <StoreIcon size={18} />
+                      </span>
                       <strong style={{ color: 'var(--unida-navy)', fontSize: '15px' }}>
                         {g.name || '(Toko tidak dikenal)'}
                       </strong>

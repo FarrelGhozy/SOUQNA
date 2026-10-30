@@ -64,11 +64,16 @@ export function LoginPage() {
         </Button>
       </form>
 
-      <div style={{ textAlign: 'center', fontSize: '14px', color: 'var(--muted)', marginTop: 'var(--space-2)' }}>
-        Belum punya akun?{' '}
-        <Link to="/register" style={{ fontWeight: 600 }}>
-          Daftar sekarang
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>
+        <Link to="/reset-password" style={{ color: 'var(--unida-blue)' }}>
+          Lupa kata sandi?
         </Link>
+        <div>
+          Belum punya akun?{' '}
+          <Link to="/register" style={{ fontWeight: 600 }}>
+            Daftar
+          </Link>
+        </div>
       </div>
 
       {/* Demo Role Switcher */}
@@ -80,7 +85,7 @@ export function LoginPage() {
         }}
       >
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--unida-navy)', marginBottom: 'var(--space-2)' }}>
-          ⚡ 1-Klik Masuk sebagai Akun Uji:
+          Pilih Cepat Akun Demo (1-Klik):
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           <Button

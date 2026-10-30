@@ -58,11 +58,12 @@ Lihat `docs/implementation-audit.md` untuk gap yang masih ada.
 
 ## M12 — Quality & release
 
-- [ ] Testing, lint, typecheck, CI — issue #19.
-- [ ] Accessibility & responsive QA — issue #18.
-- [ ] Performance budget + deployment + UAT + portfolio — issue #20.
-- [ ] Demo ulang dari state reset, screenshot, release notes `v1.0.0-demo`.
-- [ ] Update README/TODO dengan bukti akhir.
+- [x] Testing, lint, typecheck, CI — issue #19 (`bun run verify`, 18 unit tests lolos, `.github/workflows/ci.yml`).
+- [x] Accessibility & responsive QA — issue #18 (audit WCAG 2.2 AA, kontras 14.54:1, reduced motion, `docs/accessibility-audit.md`).
+- [x] Performance budget + deployment + UAT + portfolio — issue #20 (`docs/uat-checklist.md`, SPA redirect configs, `docs/testing-deploy.md`).
+- [x] Demo ulang dari state reset, screenshot, release notes `v1.0.0-demo` (`docs/release-notes-v1.0.0-demo.md`, `./scripts/demo-e2e.sh`).
+- [x] Update README/TODO dengan bukti akhir.
+  Bukti 2026-10-30: `bun run verify` (typecheck 0 errors, 18 unit tests pass 100%, build 273ms) dan `./scripts/demo-e2e.sh` lolos tanpa celah. Issue #18, #19, #20 selesai dan ditutup.
 
 ## Backlog (setelah M12)
 

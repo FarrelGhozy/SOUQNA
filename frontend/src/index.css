@@ -102,6 +102,9 @@ img {
   box-shadow: var(--shadow-md);
   border-color: var(--border-strong);
 }
+.card-hover:hover .product-img {
+  transform: scale(1.05);
+}
 .card-body {
   padding: var(--space-4);
 }
@@ -485,4 +488,30 @@ img {
   .mobile-bottom-nav {
     display: none !important;
   }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--unida-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }

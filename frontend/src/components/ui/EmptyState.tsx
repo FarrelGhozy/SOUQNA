@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button.js';
+import { OrdersIcon } from './Icons.js';
 
 export interface EmptyStateProps {
   title: string;
@@ -42,10 +43,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           justifyContent: 'center',
           marginBottom: 'var(--space-3)',
           color: 'var(--muted)',
-          fontSize: '24px',
         }}
       >
-        {icon || '📦'}
+        {icon || <OrdersIcon size={24} />}
       </div>
       <h3 style={{ fontSize: '18px', color: 'var(--unida-navy)', marginBottom: 'var(--space-1)' }}>
         {title}
