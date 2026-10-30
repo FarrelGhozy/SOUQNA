@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api-client.js';
-import { logout } from '../lib/mock-auth.js';
+import { logout, setSellerMode } from '../lib/mock-auth.js';
 import type { MockUser } from '../types/index.js';
 import { Button } from '../components/ui/Button.js';
 import { Input } from '../components/ui/Input.js';
@@ -157,7 +157,7 @@ export function ProfilePage() {
                 Kelola produk, varian, dan pesanan masuk melalui panel merchant.
               </div>
             </div>
-            <Link to="/merchant">
+            <Link to="/merchant" onClick={() => setSellerMode(true)}>
               <Button variant="primary" size="sm">
                 Masuk ke Panel Merchant →
               </Button>

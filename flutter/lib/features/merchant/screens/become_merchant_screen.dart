@@ -104,6 +104,7 @@ class _BecomeMerchantScreenState extends State<BecomeMerchantScreen> {
                                   deliveryFee: int.tryParse(_fee.text) ?? 0,
                                 );
                                 await _auth.attachStore(st.id);
+                                await _auth.setSellerMode(true);
                                 if (context.mounted) Navigator.of(context).pop(true);
                               } catch (e) {
                                 setState(() => err = e

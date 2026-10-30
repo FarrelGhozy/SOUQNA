@@ -10,6 +10,7 @@ import { users } from '../mocks/extras.mock.js';
 const KEY = 'souqna:session';
 const EXTRA_KEY = 'souqna:extra-users';
 const OVERRIDES_KEY = 'souqna:profile-overrides';
+const MODE_KEY = 'souqna:seller-mode';
 
 const memoryStore = new Map<string, string>();
 const storage = {
@@ -121,6 +122,33 @@ export function updateProfile(patch: Override): MockUser {
   const u = applyOverride(s);
   saveSession(u);
   return u;
+}
+
+// Mode penjual per-user (UI state, bukan otorisasi). Guard tetap cek hasStore.
+// Disimpan sebagai Record<userId, boolean> agar tidak bocor antar user.
+function sellerModes(): Record<string, boolean> {
+  return read<Record<string, boolean>>(MODE_KEY) ?? {};
+}
+
+export function isSellerMode(): boolean {
+  const s = read<MockUser>(KEY);
+  if (!s?.hasStore) return false;
+  return sellerModes()[s.id] === true;
+}
+
+export function setSellerMode(active: boolean): void {
+  const s = read<MockUser>(KEY);
+  if (!s) return;
+  if (!active) {
+    const m = sellerModes();
+    delete m[s.id];
+    storage.setItem(MODE_KEY, JSON.stringify(m));
+    return;
+  }
+  if (!s.hasStore) return;
+  const m = sellerModes();
+  m[s.id] = true;
+  storage.setItem(MODE_KEY, JSON.stringify(m));
 }
 
 export function logout() { storage.removeItem(KEY); }

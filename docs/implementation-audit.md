@@ -60,6 +60,8 @@ setiap penyimpangan code punya issue perbaikan yang jelas. Baseline
 | C11 | P2 | Web belum punya design token; link default hijau | `frontend/src/index.css:1-2` | Tidak sesuai brand | #12 |
 | C12 | P2 | Flutter masih hijau | `flutter/lib/app/app.dart:10` | Tidak sesuai brand | #16 |
 | C13 | P2 | Tidak ada unit/component test, lint, typecheck script, CI | Tidak ada file test/config di repo | Regresi tidak terdeteksi | #19 |
+| C14 | P1 | Navbar campur pembeli+penjual; tanpa mode fokus saat buka toko | `frontend/src/layouts/layouts.tsx:22-227` sebelum M13 | Merchant tidak fokus jualan, risiko salah konteks | M13, diperbaiki 2026-10-30 |
+| C15 | P2 | Card produk tanpa nama toko | `frontend/src/components/ProductCard.tsx:8-92` sebelum M13 | Pembeli tidak tahu asal toko di katalog | M13, diperbaiki 2026-10-30 |
 
 ## 4. Matriks status kapabilitas
 
@@ -83,6 +85,8 @@ Legenda: **Mock** = ada di UI/data dummy, **Parsial** = ada sebagian,
 | Review | Mock | Mock | Sesuai | Perlu uji completed/1 item |
 | Chat + purge 7 hari | Mock | Mock | Sesuai | UI perlu polish |
 | Merchant CRUD | Mock | Mock | Sesuai | Perlu uji ownership |
+| Mode penjual + navbar fokus | Mock | Mock | Sesuai | M13: seller_mode per-user, tombol kembali |
+| Nama toko di card | Mock | Mock | Sesuai | M13: prop storeName via getStores |
 | Admin panel | Mock | Tidak ada | Sesuai by design | Admin Android opsional |
 | Delete account + anonimisasi | Belum | Belum | Target | Deferred backend |
 | Upload Storage | Belum | Belum | Target | Saat ini URL manual |

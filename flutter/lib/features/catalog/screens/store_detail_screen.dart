@@ -75,6 +75,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
           childAspectRatio: 0.72,
           children: prods.map((p) => ProductCard(
             p: p,
+            storeName: s.name,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id))),
           )).toList(),

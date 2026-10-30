@@ -51,7 +51,18 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
   Widget build(BuildContext context) {
     final s = _auth.session.value;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard Merchant')),
+      appBar: AppBar(
+        title: const Text('Dashboard Merchant'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await _auth.setSellerMode(false);
+              if (context.mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+            },
+            child: const Text('Ke Pembeli', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : err != null

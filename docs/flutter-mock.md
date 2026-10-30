@@ -40,8 +40,12 @@ Tidak ada `app/router.dart`, `core/config/app_config.dart`,
 
 - ID/slug/nama/harga/stok/status sama persis dengan `frontend/src/mocks/`.
   Ubah di satu sisi → ubah di sisi lain.
-- Bottom nav 5 tab: Beranda, Kategori, Keranjang, Pesanan, Akun.
+- Bottom nav 5 tab pembeli: Beranda, Kategori, Keranjang, Pesanan, Akun.
   Tab Kategori = `CategoryListScreen` → search terfilter.
+- Mode penjual (`sellerMode` + `hasStore`): 5 tab ganti jadi Ringkasan, Produk,
+  Pesanan, Toko, Pasar. AppBar `SOUQNA Seller — Mode Toko` + tombol
+  `Ke Pembeli`. Masuk dashboard/profil toko via menu Akun mengaktifkan mode.
+- `ProductCard` terima `storeName`; parent ambil `getStores()` sekali lalu map.
 - Merchant via menu Akun bila `hasStore`; admin disembunyikan (prioritas web).
 - Data lewat `core/api/api_client.dart` saja. Dilarang import mock langsung dari
   widget/screen.
@@ -62,6 +66,7 @@ override. Kondisi aktual:
 | User baru (email asing) | Tidak penuh | `_extras` in-memory; hanya email yang disimpan |
 | Override nama/telepon/lokasi | Terbatas | Disimpan per user, pemulihan belum lengkap |
 | `hasStore`/`store_id` setelah buat toko | Tidak | Hilang setelah restart |
+| `sellerMode` per-user | Ya | `souqna:seller-mode:<userId>`, default false |
 | Cart/order/wishlist/chat | In-memory | Belum selaras dengan persistensi web |
 
 Perbaikan persistensi dan scoping ada di issue #11 dan #16. Jangan mengklaim

@@ -79,9 +79,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               const Text('Menu merchant',
                   style: TextStyle(fontWeight: FontWeight.bold)),
+              ValueListenableBuilder(
+                valueListenable: _auth.sellerMode,
+                builder: (_, seller, __) => seller
+                    ? OutlinedButton(
+                        onPressed: () => _auth.setSellerMode(false),
+                        child: const Text('Kembali ke Mode Pembeli'),
+                      )
+                    : ElevatedButton(
+                        onPressed: () => _auth.setSellerMode(true),
+                        child: const Text('Masuk Mode Toko'),
+                      ),
+              ),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const MerchantDashboardScreen())),
+                onPressed: () async {
+                  await _auth.setSellerMode(true);
+                  if (context.mounted) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const MerchantDashboardScreen()));
+                  }
+                },
                 child: const Text('Dashboard merchant'),
               ),
               OutlinedButton(

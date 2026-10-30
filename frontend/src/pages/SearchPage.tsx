@@ -20,6 +20,7 @@ export function SearchPage() {
   const [sp, setSp] = useSearchParams();
   const [cats, setCats] = useState<Category[]>([]);
   const [prods, setProds] = useState<Product[]>([]);
+  const [storeMap, setStoreMap] = useState<Record<string, string>>({});
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export function SearchPage() {
 
   useEffect(() => {
     api.getCategories().then(setCats).catch(() => {});
+    api.getStores().then((st) => setStoreMap(Object.fromEntries(st.map((s) => [s.id, s.name])))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -192,7 +194,7 @@ export function SearchPage() {
         <>
           <div className="grid-products">
             {prods.map((p) => (
-              <ProductCard key={p.id} p={p} />
+              <ProductCard key={p.id} p={p} storeName={storeMap[p.store_id]} />
             ))}
           </div>
 

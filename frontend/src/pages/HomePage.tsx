@@ -12,6 +12,7 @@ export function HomePage() {
   const [cats, setCats] = useState<Category[]>([]);
   const [latest, setLatest] = useState<Product[]>([]);
   const [available, setAvailable] = useState<Product[]>([]);
+  const [storeMap, setStoreMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,14 +22,16 @@ export function HomePage() {
     try {
       setLoading(true);
       setError(null);
-      const [c, lat, avail] = await Promise.all([
+      const [c, lat, avail, st] = await Promise.all([
         api.getCategories(),
         api.getProducts({ sort: 'terbaru', limit: 8 }),
         api.getProducts({ sort: 'termurah', limit: 8 }),
+        api.getStores(),
       ]);
       setCats(c);
       setLatest(lat.data);
       setAvailable(avail.data.filter((p) => !isProductOutOfStock(p)).slice(0, 8));
+      setStoreMap(Object.fromEntries(st.map((s) => [s.id, s.name])));
     } catch {
       setError('Gagal memuat katalog. Pastikan koneksi aman dan coba muat ulang.');
     } finally {
@@ -175,7 +178,7 @@ export function HomePage() {
         ) : (
           <div className="grid-products">
             {latest.map((p) => (
-              <ProductCard key={p.id} p={p} />
+              <ProductCard key={p.id} p={p} storeName={storeMap[p.store_id]} />
             ))}
           </div>
         )}
@@ -203,7 +206,7 @@ export function HomePage() {
         ) : (
           <div className="grid-products">
             {available.map((p) => (
-              <ProductCard key={p.id} p={p} />
+              <ProductCard key={p.id} p={p} storeName={storeMap[p.store_id]} />
             ))}
           </div>
         )}

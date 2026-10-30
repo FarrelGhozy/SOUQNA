@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { currentSession, logout } from '../lib/mock-auth.js';
+import { currentSession, isSellerMode, logout, setSellerMode } from '../lib/mock-auth.js';
 import { api } from '../lib/api-client.js';
 import { Badge } from '../components/ui/Badge.js';
 import { Footer } from '../components/Footer.js';
@@ -21,17 +21,22 @@ import {
 
 function Header() {
   const s = currentSession();
+  const sellerMode = Boolean(s?.hasStore && isSellerMode());
   const nav = useNavigate();
   const location = useLocation();
   const [cartCount, setCartCount] = useState<number>(0);
 
   useEffect(() => {
+    if (sellerMode) {
+      setCartCount(0);
+      return;
+    }
     let mounted = true;
     api.getCart().then((c) => {
       if (mounted) setCartCount(c.reduce((sum, i) => sum + i.quantity, 0));
     }).catch(() => {});
     return () => { mounted = false; };
-  }, [location.pathname]);
+  }, [location.pathname, sellerMode]);
 
   const navLinkStyle = ({ isActive }: { isActive: boolean }) => ({
     color: isActive ? 'var(--unida-gold)' : 'var(--surface)',
@@ -71,14 +76,14 @@ function Header() {
         {/* Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
           <Link
-            to="/"
+            to={sellerMode ? '/merchant' : '/'}
             style={{
               textDecoration: 'none',
               display: 'flex',
               alignItems: 'baseline',
               gap: 4,
             }}
-            aria-label="SOUQNA Beranda"
+            aria-label={sellerMode ? 'SOUQNA Dashboard Toko' : 'SOUQNA Beranda'}
           >
             <span
               style={{
@@ -100,12 +105,26 @@ function Header() {
               }}
             />
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, marginLeft: 4 }}>
-              UNIDA Gontor
+              {sellerMode ? 'Seller Centre' : 'UNIDA Gontor'}
             </span>
           </Link>
+          {sellerMode && (
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                color: 'var(--unida-navy)',
+                background: 'var(--unida-gold)',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+              }}
+            >
+              MODE TOKO
+            </span>
+          )}
         </div>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation Links: mode penjual sembunyikan navbar pembeli, ganti fokus jualan */}
         <nav
           style={{
             display: 'flex',
@@ -113,53 +132,75 @@ function Header() {
             gap: 4,
           }}
           className="desktop-nav"
-          aria-label="Navigasi Utama"
+          aria-label={sellerMode ? 'Navigasi Penjual' : 'Navigasi Utama'}
         >
-          <NavLink to="/" style={navLinkStyle}>Beranda</NavLink>
-          <NavLink to="/search" style={navLinkStyle}>Cari</NavLink>
-          <NavLink to="/categories" style={navLinkStyle}>Kategori</NavLink>
-          <NavLink to="/cart" style={navLinkStyle} aria-label={`Keranjang ${cartCount} item`}>
-            Keranjang
-            {cartCount > 0 && (
-              <span
-                style={{
-                  background: 'var(--unida-gold)',
-                  color: 'var(--unida-navy)',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '1px 6px',
-                  borderRadius: 'var(--radius-full)',
+          {sellerMode ? (
+            <>
+              <NavLink to="/merchant" end style={navLinkStyle}>Ringkasan</NavLink>
+              <NavLink to="/merchant/products" style={navLinkStyle}>Produk</NavLink>
+              <NavLink to="/merchant/orders" style={navLinkStyle}>Pesanan Masuk</NavLink>
+              <NavLink to="/merchant/store" style={navLinkStyle}>Pengaturan Toko</NavLink>
+              <button
+                onClick={() => {
+                  setSellerMode(false);
+                  nav('/');
                 }}
+                className="btn btn-sm btn-gold"
+                style={{ fontSize: '12px', minHeight: 32, marginLeft: 4 }}
               >
-                {cartCount}
-              </span>
-            )}
-          </NavLink>
-          {s && <NavLink to="/orders" style={navLinkStyle}>Pesanan</NavLink>}
-          {s && <NavLink to="/wishlist" style={navLinkStyle}>Wishlist</NavLink>}
-          {s && <NavLink to="/chat" style={navLinkStyle}>Chat</NavLink>}
-          {s?.hasStore && (
-            <NavLink
-              to="/merchant"
-              style={({ isActive }) => ({
-                ...navLinkStyle({ isActive }),
-                background: 'rgba(255,255,255,0.1)',
-              })}
-            >
-              Toko Saya
-            </NavLink>
-          )}
-          {s?.role === 'admin' && (
-            <NavLink
-              to="/admin"
-              style={({ isActive }) => ({
-                ...navLinkStyle({ isActive }),
-                background: 'rgba(212, 175, 55, 0.2)',
-                color: 'var(--unida-gold)',
-              })}
-            >
-              Admin
-            </NavLink>
+                ← Kembali ke Pasar
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/" style={navLinkStyle}>Beranda</NavLink>
+              <NavLink to="/search" style={navLinkStyle}>Cari</NavLink>
+              <NavLink to="/categories" style={navLinkStyle}>Kategori</NavLink>
+              <NavLink to="/cart" style={navLinkStyle} aria-label={`Keranjang ${cartCount} item`}>
+                Keranjang
+                {cartCount > 0 && (
+                  <span
+                    style={{
+                      background: 'var(--unida-gold)',
+                      color: 'var(--unida-navy)',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: 'var(--radius-full)',
+                    }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </NavLink>
+              {s && <NavLink to="/orders" style={navLinkStyle}>Pesanan</NavLink>}
+              {s && <NavLink to="/wishlist" style={navLinkStyle}>Wishlist</NavLink>}
+              {s && <NavLink to="/chat" style={navLinkStyle}>Chat</NavLink>}
+              {s?.hasStore && (
+                <NavLink
+                  to="/merchant"
+                  onClick={() => setSellerMode(true)}
+                  style={({ isActive }) => ({
+                    ...navLinkStyle({ isActive }),
+                    background: 'rgba(255,255,255,0.1)',
+                  })}
+                >
+                  Toko Saya
+                </NavLink>
+              )}
+              {s?.role === 'admin' && (
+                <NavLink
+                  to="/admin"
+                  style={({ isActive }) => ({
+                    ...navLinkStyle({ isActive }),
+                    background: 'rgba(212, 175, 55, 0.2)',
+                    color: 'var(--unida-gold)',
+                  })}
+                >
+                  Admin
+                </NavLink>
+              )}
+            </>
           )}
         </nav>
 
@@ -228,16 +269,22 @@ function Header() {
 
 function MobileBottomNav() {
   const s = currentSession();
+  const sellerMode = Boolean(s?.hasStore && isSellerMode());
+  const nav = useNavigate();
   const [cartCount, setCartCount] = useState<number>(0);
   const location = useLocation();
 
   useEffect(() => {
+    if (sellerMode) {
+      setCartCount(0);
+      return;
+    }
     let mounted = true;
     api.getCart().then((c) => {
       if (mounted) setCartCount(c.reduce((sum, i) => sum + i.quantity, 0));
     }).catch(() => {});
     return () => { mounted = false; };
-  }, [location.pathname]);
+  }, [location.pathname, sellerMode]);
 
   const navItemStyle = ({ isActive }: { isActive: boolean }) => ({
     display: 'flex',
@@ -255,6 +302,61 @@ function MobileBottomNav() {
     minHeight: 48,
     transition: 'color var(--transition-fast)',
   });
+
+  if (sellerMode) {
+    return (
+      <nav
+        className="mobile-bottom-nav"
+        aria-label="Navigasi Bawah Penjual"
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 62,
+          background: 'var(--unida-navy)',
+          borderTop: '2px solid var(--unida-gold)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          zIndex: 100,
+        }}
+      >
+        <NavLink to="/merchant" end style={navItemStyle}>
+          <HomeIcon size={20} />
+          <span>Ringkasan</span>
+        </NavLink>
+        <NavLink to="/merchant/products" style={navItemStyle}>
+          <StoreIcon size={20} />
+          <span>Produk</span>
+        </NavLink>
+        <NavLink to="/merchant/orders" style={navItemStyle}>
+          <OrdersIcon size={20} />
+          <span>Pesanan</span>
+        </NavLink>
+        <NavLink to="/merchant/store" style={navItemStyle}>
+          <UserIcon size={20} />
+          <span>Toko</span>
+        </NavLink>
+        <button
+          onClick={() => {
+            setSellerMode(false);
+            nav('/');
+          }}
+          aria-label="Kembali ke Mode Pembeli"
+          style={{
+            ...navItemStyle({ isActive: false }),
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          <SearchIcon size={20} />
+          <span>Pasar</span>
+        </button>
+      </nav>
+    );
+  }
 
   return (
     <nav
@@ -347,6 +449,11 @@ const varSpace2 = 'var(--space-2)';
 
 export function MerchantLayout() {
   const s = currentSession();
+  const nav = useNavigate();
+  useEffect(() => {
+    // Akses akun toko langsung fokus ke penjual.
+    if (s?.hasStore && !isSellerMode()) setSellerMode(true);
+  }, [s?.id]);
   const navItem = ({ isActive }: { isActive: boolean }) => ({
     display: 'flex',
     alignItems: 'center',
@@ -411,9 +518,15 @@ export function MerchantLayout() {
             <span>Pengaturan Toko</span>
           </NavLink>
           <hr style={{ borderColor: 'rgba(255,255,255,0.15)', margin: '8px 0' }} />
-          <Link to="/" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', padding: '8px 14px', textDecoration: 'none' }}>
+          <button
+            onClick={() => {
+              setSellerMode(false);
+              nav('/');
+            }}
+            style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', padding: '8px 14px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+          >
             ← Kembali ke Pasar
-          </Link>
+          </button>
         </aside>
 
         <main id="main-content" style={{ flex: 1, minWidth: 0 }}>

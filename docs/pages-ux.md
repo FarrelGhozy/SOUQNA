@@ -43,6 +43,25 @@
 Aturan: semua route tetap di `frontend/src/routes/router.tsx`; `pages/` tidak
 mengatur routing.
 
+### 8.1a Mode navbar
+
+- Pembeli (default): Beranda, Cari, Kategori, Keranjang, Pesanan, Wishlist,
+  Chat. Mobile: Beranda, Cari, Keranjang, Pesanan, Akun.
+- Penjual (`seller_mode` + `hasStore`): header/sidebar/bottom-nav ganti fokus
+  jualan — Ringkasan, Produk, Pesanan Masuk, Pengaturan Toko, plus tombol
+  persisten `Kembali ke Pasar` / `Ke Pembeli`. Navbar pembeli disembunyikan
+  total agar tidak campur konteks (rekomendasi Seller Centre).
+- Masuk `/merchant*` otomatis aktifkan mode; keluar hapus flag per-user.
+  Guard `RequireMerchant` tetap cek `hasStore`, mode tidak membuka akses.
+
+### 8.1b Card produk
+
+- `ProductCard` wajib tampilkan nama toko di bawah nama produk, link ke
+  `/stores/:storeId` (web) / detail toko (Flutter). Fallback `-` bila toko
+  tidak ketemu, truncate 1 baris.
+- Parent resolve sekali via `api.getStores()` → map `store_id → name`, oper
+  sebagai prop `storeName`. Dilarang import mock langsung dari komponen.
+
 ## 8.2 Halaman web target
 
 ### Publik & auth

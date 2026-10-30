@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Category> cats = [];
   List<ProductMock> latest = [];
   List<ProductMock> available = [];
+  Map<String, String> storeMap = {};
 
   @override
   void initState() {
@@ -33,10 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final c = await _api.getCategories();
       final lat = await _api.getProducts(sort: ProductSort.terbaru, limit: 8);
       final av = await _api.getProducts(sort: ProductSort.termurah, limit: 8);
+      final sts = await _api.getStores();
       setState(() {
         cats = c;
         latest = lat.data;
         available = av.data.where((p) => !p.outOfStock).take(8).toList();
+        storeMap = {for (final s in sts) s.id: s.name};
       });
     } catch (_) {
       setState(() => error = 'Gagal memuat katalog. Coba lagi.');
@@ -77,14 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
           else GridView.count(
             crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 0.72,
-            children: latest.map((p) => ProductCard(p: p, onTap: () => _open(p))).toList(),
+            children: latest.map((p) => ProductCard(p: p, storeName: storeMap[p.storeId], onTap: () => _open(p))).toList(),
           ),
           const Text('Tersedia', style: TextStyle(fontWeight: FontWeight.bold)),
           if (available.isEmpty) const Text('Semua produk habis.')
           else GridView.count(
             crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 0.72,
-            children: available.map((p) => ProductCard(p: p, onTap: () => _open(p))).toList(),
+            children: available.map((p) => ProductCard(p: p, storeName: storeMap[p.storeId], onTap: () => _open(p))).toList(),
           ),
           Text('Diperbarui ${formatDateWIB(DateTime.now().toUtc().toIso8601String())} WIB',
               style: const TextStyle(fontSize: 11, color: Colors.grey)),

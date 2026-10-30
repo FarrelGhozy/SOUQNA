@@ -37,6 +37,8 @@
 | Merchant CRUD | Ada | Ada | Perlu ownership |
 | Admin web | Ada | Tidak ada | Perlu |
 | Delete account/anonimisasi | Belum | Belum | Target |
+| Mode penjual + tombol kembali | Ada | Ada | Mock UI state |
+| Nama toko di card produk | Ada | Ada | Mock via getStores |
 | Upsell/notif/payment digital | Tidak | Tidak | Out of scope |
 
 Detail gap: `docs/implementation-audit.md`. Jangan menandai target backend

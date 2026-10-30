@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api-client.js';
+import { setSellerMode } from '../lib/mock-auth.js';
 import type { Store } from '../types/index.js';
 import { Button } from '../components/ui/Button.js';
 import { Input, Textarea } from '../components/ui/Input.js';
@@ -53,7 +54,7 @@ export function BecomeMerchantPage() {
           <p style={{ color: 'var(--muted)', fontSize: '14px', margin: 'var(--space-2) 0 var(--space-4) 0' }}>
             Akun Anda terhubung dengan toko <strong>{existing.name}</strong>. Sistem saat ini membatasi 1 toko per akun.
           </p>
-          <Link to="/merchant">
+          <Link to="/merchant" onClick={() => setSellerMode(true)}>
             <Button variant="primary">Buka Dashboard Merchant →</Button>
           </Link>
         </div>
@@ -83,6 +84,7 @@ export function BecomeMerchantPage() {
         delivery_available: deliv,
         delivery_fee: Number(fee) || 0,
       });
+      setSellerMode(true);
       toast.success('Selamat! Toko merchant Anda berhasil didaftarkan.');
       nav('/merchant');
     } catch (ex) {

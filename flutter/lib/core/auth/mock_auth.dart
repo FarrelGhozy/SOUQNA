@@ -9,9 +9,11 @@ class MockAuth {
   static final instance = MockAuth._();
 
   final ValueNotifier<UserMock?> session = ValueNotifier(null);
+  final ValueNotifier<bool> sellerMode = ValueNotifier(false);
   static const _key = 'souqna:session';
   static const _extraKey = 'souqna:extra-users';
   static const _ovKey = 'souqna:profile-overrides';
+  static const _modeKey = 'souqna:seller-mode';
 
   bool _loaded = false;
 
@@ -50,6 +52,7 @@ class MockAuth {
             if (parts.length > 2 && parts[2].isNotEmpty) u = u.copyWith(defaultLocation: parts[2]);
           }
           session.value = u;
+          await _loadSellerMode(u.id);
         }
       }
     } catch (_) {}
@@ -79,6 +82,33 @@ class MockAuth {
           '{"id":"${s.id}","name":"${s.fullName}","email":"${s.email}","role":"${s.role}","hasStore":${s.hasStore},"storeId":"${s.storeId ?? ''}"}',
         );
       }
+    } catch (_) {}
+  }
+
+  String _modeKeyFor(String userId) => '$_modeKey:$userId';
+
+  Future<void> _loadSellerMode(String userId) async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      sellerMode.value = sp.getBool(_modeKeyFor(userId)) ?? false;
+      // Tanpa toko tidak boleh mode penjual.
+      if (session.value?.hasStore != true) sellerMode.value = false;
+    } catch (_) {
+      sellerMode.value = false;
+    }
+  }
+
+  /// Mode penjual per-user (UI state, bukan otorisasi). Guard tetap cek hasStore.
+  Future<void> setSellerMode(bool active) async {
+    final s = session.value;
+    if (s == null || !s.hasStore) {
+      sellerMode.value = false;
+      return;
+    }
+    sellerMode.value = active;
+    try {
+      final sp = await SharedPreferences.getInstance();
+      await sp.setBool(_modeKeyFor(s.id), active);
     } catch (_) {}
   }
 
@@ -120,6 +150,7 @@ class MockAuth {
       } catch (_) {}
     }
     await _persist();
+    await _loadSellerMode(session.value!.id);
     return session.value!;
   }
 
@@ -137,6 +168,7 @@ class MockAuth {
   Future<UserMock> loginAs(String role) async {
     session.value = usersMock.firstWhere((u) => u.role == role, orElse: () => usersMock[0]);
     await _persist();
+    await _loadSellerMode(session.value!.id);
     return session.value!;
   }
 
@@ -159,6 +191,7 @@ class MockAuth {
 
   Future<void> logout() async {
     session.value = null;
+    sellerMode.value = false;
     await _persist();
   }
 

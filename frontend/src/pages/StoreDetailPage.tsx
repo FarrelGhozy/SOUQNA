@@ -188,7 +188,7 @@ export function StoreDetailPage() {
         ) : (
           <div className="grid-products">
             {prods.map((p) => (
-              <ProductCard key={p.id} p={p} />
+              <ProductCard key={p.id} p={p} storeName={store?.name} />
             ))}
           </div>
         )}

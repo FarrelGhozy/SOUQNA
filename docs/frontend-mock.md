@@ -34,6 +34,10 @@ tersebut berada di `extras.mock.ts` dan operasi runtime disimpan di
 - Harga/stok/total/voucher dihitung helper di `api-client`, bukan input komponen.
 - Gambar: `https://picsum.photos/seed/<slug>/600/600` + `onError` fallback
   `/placeholder.svg`.
+- `ProductCard` terima prop `storeName`; parent ambil `api.getStores()` sekali
+  lalu map `store_id → name`. Jangan `getStore` per card (N+1).
+- Mode penjual: `isSellerMode()` / `setSellerMode()` di `mock-auth.ts`;
+  `MerchantLayout` auto-aktif saat `hasStore`, header/bottom-nav ganti total.
 - Simulasi latency: `delay(200–400ms)` agar loading state terlihat.
 - Voucher divalidasi di `api-client`: aktif, masa berlaku, minimum subtotal.
 - Checkout dummy: hitung ulang, kurangi stok, buat 1 checkout + N order,
@@ -52,6 +56,7 @@ backend.
 | `souqna:session` | Snapshot user login |
 | `souqna:extra-users` | User yang dibuat lewat email asing |
 | `souqna:profile-overrides` | Override nama/telepon/lokasi/hasStore |
+| `souqna:seller-mode` | Record userId → mode penjual aktif |
 | `souqna:cart` | Cart aktif (catatan: masih global, lihat §5) |
 | `souqna:extra-stores`, `souqna:store-overrides` | Toko merchant baru/ubah |
 | `souqna:extra-products`, `souqna:product-overrides` | Produk merchant baru/ubah |

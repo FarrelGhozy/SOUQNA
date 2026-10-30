@@ -13,6 +13,7 @@ import { TrashIcon } from '../components/ui/Icons.js';
 export function WishlistPage() {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [prods, setProds] = useState<Product[]>([]);
+  const [storeMap, setStoreMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const nav = useNavigate();
@@ -23,6 +24,8 @@ export function WishlistPage() {
       setLoading(true);
       const w = await api.getWishlist();
       setItems(w);
+      const [stores] = await Promise.all([api.getStores()]);
+      setStoreMap(Object.fromEntries(stores.map((s) => [s.id, s.name])));
       const pList: Product[] = [];
       for (const it of w) {
         const p = await api.getProduct(it.product_id);
@@ -84,7 +87,7 @@ export function WishlistPage() {
         <div className="grid-products">
           {prods.map((p) => (
             <div key={p.id} style={{ display: 'flex', flexDirection: 'column' }}>
-              <ProductCard p={p} />
+              <ProductCard p={p} storeName={storeMap[p.store_id]} />
               <Button
                 variant="ghost"
                 size="sm"

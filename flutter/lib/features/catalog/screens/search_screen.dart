@@ -26,6 +26,7 @@ class _SearchScreenState extends State<SearchScreen> {
   String? error;
   List<Category> cats = [];
   List<ProductMock> prods = [];
+  Map<String, String> storeMap = {};
   static const int limit = 12;
 
   @override
@@ -33,6 +34,7 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     categoryId = widget.initialCategoryId ?? '';
     _api.getCategories().then((c) => setState(() => cats = c));
+    _api.getStores().then((sts) => setState(() => storeMap = {for (final s in sts) s.id: s.name}));
     _search();
   }
 
@@ -117,6 +119,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             childAspectRatio: 0.72,
                             children: prods.map((p) => ProductCard(
                               p: p,
+                              storeName: storeMap[p.storeId],
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute(builder: (_) => ProductDetailScreen(productId: p.id))),
                             )).toList(),

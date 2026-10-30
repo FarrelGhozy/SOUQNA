@@ -65,6 +65,14 @@ Lihat `docs/implementation-audit.md` untuk gap yang masih ada.
 - [x] Update README/TODO dengan bukti akhir.
   Bukti 2026-10-30: `bun run verify` (typecheck 0 errors, 18 unit tests pass 100%, build 273ms) dan `./scripts/demo-e2e.sh` lolos tanpa celah. Issue #18, #19, #20 selesai dan ditutup.
 
+## M13 — Mode penjual & nama toko di card
+
+- [x] Mode penjual web: `seller_mode` per-user, navbar ganti fokus jualan, tombol kembali ke pasar.
+- [x] Mode penjual Flutter: `sellerMode` + bottom nav seller, tombol ke pembeli.
+- [x] Nama toko di card web + Flutter via `getStores()` sekali, parity ID.
+- [x] Regression: build/tsc/demo-e2e lolos, guard `hasStore` tetap otorisasi.
+  Bukti 2026-10-30: `bun run verify` (tsc 0 error, 22 unit tests pass, build 262ms) dan `./scripts/demo-e2e.sh` lolos 100%.
+
 ## Backlog (setelah M12)
 
 - [ ] Mock UI reset password & hapus akun admin — issue #21.

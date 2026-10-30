@@ -5,7 +5,8 @@ import type { Product } from '../types/index.js';
 import { Badge } from './ui/Badge.js';
 
 // Kartu produk profesional UNIDA Gontor — harga dari helper, gambar wajib fallback onError.
-export function ProductCard({ p }: { p: Product }) {
+// storeName dioper parent (resolve via api.getStores sekali), bukan import mock langsung.
+export function ProductCard({ p, storeName }: { p: Product; storeName?: string }) {
   const habis = isProductOutOfStock(p);
   const minPrice = productMinPrice(p);
 
@@ -74,6 +75,22 @@ export function ProductCard({ p }: { p: Product }) {
           }}
         >
           {p.name}
+        </Link>
+        <Link
+          to={`/stores/${p.store_id}`}
+          aria-label={`Toko ${storeName ?? '-'}`}
+          style={{
+            color: 'var(--muted)',
+            fontSize: '12px',
+            textDecoration: 'none',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            display: 'block',
+            marginTop: 2,
+          }}
+        >
+          {storeName ?? '-'}
         </Link>
 
         <div style={{ marginTop: 'auto', paddingTop: 'var(--space-2)' }}>
