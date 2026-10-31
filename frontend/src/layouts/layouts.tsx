@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { currentSession, isSellerMode, logout, setSellerMode } from '../lib/mock-auth.js';
 import { api } from '../lib/api-client.js';
 import { Badge } from '../components/ui/Badge.js';
+import { SouqnaLogo } from '../components/ui/SouqnaLogo.js';
 import { Footer } from '../components/Footer.js';
 import {
   HomeIcon,
@@ -15,7 +16,6 @@ import {
   CategoryIcon,
   VoucherIcon,
   FileTextIcon,
-  PlusIcon,
   SettingsIcon,
 } from '../components/ui/Icons.js';
 
@@ -55,7 +55,7 @@ function Header() {
   return (
     <header
       style={{
-        background: 'var(--unida-navy)',
+        background: 'var(--topbar-bg, linear-gradient(90deg, var(--unida-blue) 0%, var(--unida-blue-hover) 40%, var(--unida-navy) 100%))',
         color: 'var(--surface)',
         borderBottom: '2px solid var(--unida-gold)',
         position: 'sticky',
@@ -80,33 +80,16 @@ function Header() {
             style={{
               textDecoration: 'none',
               display: 'flex',
-              alignItems: 'baseline',
-              gap: 4,
+              alignItems: 'center',
             }}
             aria-label={sellerMode ? 'SOUQNA Dashboard Toko' : 'SOUQNA Beranda'}
           >
-            <span
-              style={{
-                fontSize: '22px',
-                fontWeight: 800,
-                letterSpacing: '0.05em',
-                color: 'var(--surface)',
-              }}
-            >
-              SOUQNA
-            </span>
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'var(--unida-gold)',
-                display: 'inline-block',
-              }}
+            <SouqnaLogo
+              variant="horizontal"
+              theme="dark"
+              size="md"
+              subtext={sellerMode ? 'Seller Centre' : 'UNIDA Gontor'}
             />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 500, marginLeft: 4 }}>
-              {sellerMode ? 'Seller Centre' : 'UNIDA Gontor'}
-            </span>
           </Link>
           {sellerMode && (
             <span
@@ -136,17 +119,29 @@ function Header() {
         >
           {sellerMode ? (
             <>
-              <NavLink to="/merchant" end style={navLinkStyle}>Ringkasan</NavLink>
-              <NavLink to="/merchant/products" style={navLinkStyle}>Produk</NavLink>
-              <NavLink to="/merchant/orders" style={navLinkStyle}>Pesanan Masuk</NavLink>
-              <NavLink to="/merchant/store" style={navLinkStyle}>Pengaturan Toko</NavLink>
+              <NavLink to="/merchant" end style={navLinkStyle}>
+                <DashboardIcon size={16} />
+                <span>Ringkasan</span>
+              </NavLink>
+              <NavLink to="/merchant/products" style={navLinkStyle}>
+                <StoreIcon size={16} />
+                <span>Produk</span>
+              </NavLink>
+              <NavLink to="/merchant/orders" style={navLinkStyle}>
+                <OrdersIcon size={16} />
+                <span>Pesanan Masuk</span>
+              </NavLink>
+              <NavLink to="/merchant/store" style={navLinkStyle}>
+                <SettingsIcon size={16} />
+                <span>Pengaturan Toko</span>
+              </NavLink>
               <button
                 onClick={() => {
                   setSellerMode(false);
                   nav('/');
                 }}
                 className="btn btn-sm btn-gold"
-                style={{ fontSize: '12px', minHeight: 32, marginLeft: 4 }}
+                style={{ fontSize: '12px', minHeight: 32, marginLeft: 8 }}
               >
                 ← Kembali ke Pasar
               </button>
@@ -449,87 +444,17 @@ const varSpace2 = 'var(--space-2)';
 
 export function MerchantLayout() {
   const s = currentSession();
-  const nav = useNavigate();
   useEffect(() => {
     // Akses akun toko langsung fokus ke penjual.
     if (s?.hasStore && !isSellerMode()) setSellerMode(true);
   }, [s?.id]);
-  const navItem = ({ isActive }: { isActive: boolean }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    padding: '10px 14px',
-    borderRadius: 'var(--radius-md)',
-    textDecoration: 'none',
-    fontSize: '14px',
-    fontWeight: isActive ? 700 : 500,
-    color: isActive ? 'var(--surface)' : 'rgba(255,255,255,0.75)',
-    background: isActive ? 'var(--unida-navy-dark)' : 'transparent',
-    borderLeft: isActive ? '4px solid var(--unida-gold)' : '4px solid transparent',
-  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <Header />
-      <div className="container" style={{ display: 'flex', gap: 'var(--space-6)', padding: 'var(--space-6) var(--space-4)', flex: 1, paddingBottom: 80 }}>
-        <aside
-          style={{
-            width: 240,
-            flexShrink: 0,
-            background: 'var(--unida-navy)',
-            borderRadius: 'var(--radius-lg)',
-            padding: 'var(--space-4)',
-            color: 'var(--surface)',
-            height: 'fit-content',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-          className="desktop-sidebar"
-          aria-label="Sidebar Merchant"
-        >
-          <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: varSpace2 }}>
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--unida-gold)', fontWeight: 700 }}>
-              Panel Merchant
-            </div>
-            <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--surface)', marginTop: 2 }}>
-              {s?.full_name}
-            </div>
-          </div>
-          <NavLink to="/merchant" end style={navItem}>
-            <DashboardIcon size={18} />
-            <span>Ringkasan</span>
-          </NavLink>
-          <NavLink to="/merchant/products" style={navItem}>
-            <StoreIcon size={18} />
-            <span>Produk Toko</span>
-          </NavLink>
-          <NavLink to="/merchant/products/new" style={navItem}>
-            <PlusIcon size={18} />
-            <span>Tambah Produk</span>
-          </NavLink>
-          <NavLink to="/merchant/orders" style={navItem}>
-            <OrdersIcon size={18} />
-            <span>Pesanan Masuk</span>
-          </NavLink>
-          <NavLink to="/merchant/store" style={navItem}>
-            <SettingsIcon size={18} />
-            <span>Pengaturan Toko</span>
-          </NavLink>
-          <hr style={{ borderColor: 'rgba(255,255,255,0.15)', margin: '8px 0' }} />
-          <button
-            onClick={() => {
-              setSellerMode(false);
-              nav('/');
-            }}
-            style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', padding: '8px 14px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer' }}
-          >
-            ← Kembali ke Pasar
-          </button>
-        </aside>
-
-        <main id="main-content" style={{ flex: 1, minWidth: 0 }}>
+      <div className="container" style={{ padding: 'var(--space-6) var(--space-4)', flex: 1, paddingBottom: 80 }}>
+        <main id="main-content" style={{ width: '100%' }}>
           <Outlet />
         </main>
       </div>
@@ -576,10 +501,12 @@ export function AdminLayout() {
           aria-label="Sidebar Admin"
         >
           <div style={{ padding: 'var(--space-2) var(--space-3)', marginBottom: varSpace2 }}>
-            <Badge variant="gold">ADMIN PANEL</Badge>
-            <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--surface)', marginTop: 6 }}>
-              SOUQNA Kampus
-            </div>
+            <SouqnaLogo
+              variant="horizontal"
+              theme="dark"
+              size="sm"
+              subtext="Admin Panel"
+            />
           </div>
           <NavLink to="/admin" end style={navItem}>
             <DashboardIcon size={18} />
@@ -660,9 +587,13 @@ export function AuthLayout() {
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 'var(--space-4)' }}>
-              <span style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '0.05em' }}>SOUQNA</span>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--unida-gold)', display: 'inline-block' }} />
+            <div style={{ marginBottom: 'var(--space-6)' }}>
+              <SouqnaLogo
+                variant="horizontal"
+                theme="dark"
+                size="lg"
+                subtext="Pasar Digital UNIDA Gontor"
+              />
             </div>
             <h2 style={{ color: 'var(--surface)', fontSize: '24px', marginBottom: 'var(--space-3)' }}>
               Pasar Digital Kampus UNIDA Gontor
