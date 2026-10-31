@@ -51,7 +51,8 @@ sembarangan, memproses pembayaran.
 - Satu akun dua peran. Mode hanya preferensi UI; guard tetap cek `hasStore`.
 - Web: `isSellerMode()` / `setSellerMode()` di `frontend/src/lib/mock-auth.ts`,
   simpan `souqna:seller-mode` per-user. Masuk `/merchant*` otomatis aktif;
-  keluar via `Kembali ke Pasar` di header/sidebar/bottom-nav.
+  keluar via `Kembali ke Pasar` di header/bottom-nav (sidebar merchant dihilangkan
+  agar top bar menjadi pengendali tunggal).
 - Mode penjual menyembunyikan navbar pembeli dan mengganti dengan navbar fokus
   jualan (Ringkasan/Produk/Pesanan Masuk/Pengaturan Toko + Kembali ke Pasar).
 - Flutter: `MockAuth.sellerMode` + persist `souqna:seller-mode:<userId>`.
