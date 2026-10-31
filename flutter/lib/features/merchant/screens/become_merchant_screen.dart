@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/auth/mock_auth.dart';
+import '../../../shared/theme/app_theme.dart';
 
 // Form Jadi Merchant: 1 akun 1 toko, tolak toko kedua.
 class BecomeMerchantScreen extends StatefulWidget {
@@ -47,7 +48,10 @@ class _BecomeMerchantScreenState extends State<BecomeMerchantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Jadi Merchant')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: const Text('Jadi Merchant'),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : existing != null
