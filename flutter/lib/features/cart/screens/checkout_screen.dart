@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/utils/money.dart';
+import '../../../shared/theme/app_theme.dart';
 import 'checkout_success_screen.dart';
 
 // Checkout: pilih pickup/diantar per toko + lokasi, kode voucher, preview total.
@@ -64,7 +65,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout COD')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: const Text('Checkout COD'),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : lines.isEmpty
