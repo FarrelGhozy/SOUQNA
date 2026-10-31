@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../mocks/categories_mock.dart';
+import '../../../shared/theme/app_theme.dart';
 import 'search_screen.dart';
 
 // Daftar kategori (parity web /categories). Ketuk → Search terfilter kategori.
@@ -61,7 +62,10 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => Scaffold(
-                  appBar: AppBar(title: Text(c.name)),
+                  appBar: AppBar(
+                    flexibleSpace: AppTheme.topBarFlexibleSpace,
+                    title: Text(c.name),
+                  ),
                   body: SearchScreen(initialCategoryId: c.id),
                 ),
               )),
