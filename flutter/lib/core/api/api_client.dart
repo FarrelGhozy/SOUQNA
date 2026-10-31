@@ -4,6 +4,11 @@ import '../../mocks/products_mock.dart';
 import '../../mocks/stores_mock.dart';
 import '../../mocks/vouchers_mock.dart';
 
+// Model dipakai UI lewat api_client (bukan import mocks langsung).
+export '../../mocks/products_mock.dart' show ProductMock, VariantMock;
+export '../../mocks/stores_mock.dart' show StoreMock;
+export '../../mocks/users_mock.dart' show UserMock;
+
 // Mock-first: Dio terpasang, tapi USE_MOCK=true → kembalikan dummy lokal.
 // Saat backend siap: flip ke false + set baseUrl ke /api/v1.
 const useMock = true;
