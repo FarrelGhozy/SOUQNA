@@ -3,6 +3,7 @@ import { formatIDR } from '../lib/format.js';
 import { isProductOutOfStock, productMinPrice } from '../lib/api-client.js';
 import type { Product } from '../types/index.js';
 import { Badge } from './ui/Badge.js';
+import { StoreIcon } from './ui/Icons.js';
 
 // Kartu produk profesional UNIDA Gontor — harga dari helper, gambar wajib fallback onError.
 // storeName dioper parent (resolve via api.getStores sekali), bukan import mock langsung.
@@ -17,7 +18,7 @@ export function ProductCard({ p, storeName }: { p: Product; storeName?: string }
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        opacity: habis ? 0.8 : 1,
+        opacity: habis ? 0.85 : 1,
       }}
     >
       <Link
@@ -45,7 +46,7 @@ export function ProductCard({ p, storeName }: { p: Product; storeName?: string }
             (e.target as HTMLImageElement).src = '/placeholder.svg';
           }}
         />
-        {habis && (
+        {habis ? (
           <div
             style={{
               position: 'absolute',
@@ -54,6 +55,30 @@ export function ProductCard({ p, storeName }: { p: Product; storeName?: string }
             }}
           >
             <Badge variant="danger">Stok habis</Badge>
+          </div>
+        ) : (
+          <div
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: 8,
+            }}
+          >
+            <span
+              style={{
+                background: 'rgba(11, 42, 74, 0.85)',
+                color: 'var(--unida-gold)',
+                fontSize: '10px',
+                fontWeight: 800,
+                padding: '2px 7px',
+                borderRadius: '4px',
+                letterSpacing: '0.05em',
+                backdropFilter: 'blur(4px)',
+                display: 'inline-block',
+              }}
+            >
+              COD
+            </span>
           </div>
         )}
       </Link>
@@ -72,6 +97,7 @@ export function ProductCard({ p, storeName }: { p: Product; storeName?: string }
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             minHeight: '2.7em',
+            textDecoration: 'none',
           }}
         >
           {p.name}
@@ -86,18 +112,24 @@ export function ProductCard({ p, storeName }: { p: Product; storeName?: string }
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            display: 'block',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
             marginTop: 2,
+            transition: 'color var(--transition-fast)',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--unida-blue)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}
         >
-          {storeName ?? '-'}
+          <StoreIcon size={13} />
+          <span>{storeName ?? '-'}</span>
         </Link>
 
         <div style={{ marginTop: 'auto', paddingTop: 'var(--space-2)' }}>
           <div
             style={{
               fontSize: '15px',
-              fontWeight: 700,
+              fontWeight: 800,
               color: 'var(--unida-navy)',
             }}
           >
