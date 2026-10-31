@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { SouqnaLogo } from './ui/SouqnaLogo.js';
 
 export function Footer() {
   return (
@@ -23,22 +24,13 @@ export function Footer() {
         >
           {/* Brand Info */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 'var(--space-3)' }}>
-              <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '0.05em', color: '#FFFFFF' }}>
-                SOUQNA
-              </span>
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: 'var(--unida-gold)',
-                  display: 'inline-block',
-                }}
+            <div style={{ marginBottom: 'var(--space-4)' }}>
+              <SouqnaLogo
+                variant="horizontal"
+                theme="dark"
+                size="md"
+                subtext="UNIDA Gontor"
               />
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-                UNIDA Gontor
-              </span>
             </div>
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '13px', lineHeight: 1.6, marginBottom: 'var(--space-4)' }}>
               Pasar Digital Civitas Akademika Universitas Darussalam Gontor. Belanja mudah, transparan, dan pembayaran COD langsung di area kampus.
