@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/auth/mock_auth.dart';
 import '../../../core/utils/date_id.dart';
+import '../../../shared/theme/app_theme.dart';
 
 // Isi thread: pesan terlihat + penghitung pesan lama + kirim teks.
 class ThreadScreen extends StatefulWidget {
@@ -50,7 +51,10 @@ class _ThreadScreenState extends State<ThreadScreen> {
   Widget build(BuildContext context) {
     final uid = _auth.session.value?.id ?? '';
     return Scaffold(
-      appBar: AppBar(title: Text(widget.convId)),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: Text(widget.convId),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : err != null
