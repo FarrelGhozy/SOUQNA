@@ -11,6 +11,9 @@ linter:
     - use_key_in_widget_constructors
 
 analyzer:
+  exclude:
+    - build/**
+    - android/**
   language:
     strict-casts: true
     strict-inference: true
