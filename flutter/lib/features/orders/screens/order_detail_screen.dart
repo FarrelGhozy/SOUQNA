@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/auth/mock_auth.dart';
 import '../../../core/utils/money.dart';
+import '../../../shared/theme/app_theme.dart';
+import '../../../shared/widgets/status_badge.dart';
 
 // Detail order: aksi kontekstual + histori. Toast jelas saat ilegal.
 class OrderDetailScreen extends StatefulWidget {
@@ -61,7 +63,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Pesanan')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: const Text('Detail Pesanan'),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : err != null
@@ -97,30 +102,146 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       buttons.add(ElevatedButton(onPressed: busy ? null : () => _act('paid', 'Tandai lunas'), child: const Text('Tandai lunas')));
     }
     return ListView(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       children: [
-        Text(order.id, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('Status: ${order.status} · Bayar: ${order.paymentStatus} (COD)'),
-        Text('Toko: ${order.storeName}'),
-        Text('Total COD: ${formatIDR(order.grandTotal)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+        // Kartu Ringkasan Status
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('ID: ${order.id.toUpperCase()}',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.unidaNavy)),
+                  Text(order.storeName,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.unidaBlue)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  StatusBadge.orderStatus(order.status),
+                  StatusBadge.paymentStatus(order.paymentStatus),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total Tagihan (COD)', style: TextStyle(fontSize: 13, color: AppTheme.muted)),
+                  Text(formatIDR(order.grandTotal),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.unidaNavy)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Tombol Aksi Transisi
+        if (buttons.isNotEmpty) ...[
+          const Text('Aksi Pesanan',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.unidaNavy)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: buttons),
+          const SizedBox(height: 16),
+        ],
+
+        // Daftar Item Pesanan
+        const Text('Daftar Item',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.unidaNavy)),
         const SizedBox(height: 8),
-        const Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold)),
-        Wrap(spacing: 8, children: buttons.isEmpty ? [const Text('Tidak ada aksi untuk peran/status ini.')] : buttons),
-        const SizedBox(height: 8),
-        const Text('Items', style: TextStyle(fontWeight: FontWeight.bold)),
-        if (order.items.isEmpty) const Text('Tanpa snapshot item (order seed).', style: TextStyle(color: Colors.grey)),
+        if (order.items.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('Tanpa snapshot item (order seed).', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
+          ),
         for (final it in order.items)
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${it.name} (${it.variant}) × ${it.qty} — ${formatIDR(it.total)}'),
-            if (!widget.isMerchant && order.status == 'completed' && it.id.isNotEmpty)
-              _ReviewBox(
-                  api: _api,
-                  buyerId: _auth.session.value?.id ?? '',
-                  itemId: it.id),
-          ]),
+          Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: AppTheme.border),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${it.name} (${it.variant})',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                      ),
+                      Text('× ${it.qty}', style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.muted)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(formatIDR(it.total),
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.unidaNavy, fontSize: 13)),
+                  if (!widget.isMerchant && order.status == 'completed' && it.id.isNotEmpty) ...[
+                    const Divider(height: 16),
+                    _ReviewBox(
+                      api: _api,
+                      buyerId: _auth.session.value?.id ?? '',
+                      itemId: it.id,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 16),
+
+        // Histori Status
+        const Text('Riwayat Status Pesanan',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.unidaNavy)),
         const SizedBox(height: 8),
-        const Text('Histori status', style: TextStyle(fontWeight: FontWeight.bold)),
-        for (final h in order.history) Text('${h.from} → ${h.to}${h.note != null ? ' · ${h.note}' : ''}'),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: AppTheme.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                for (final h in order.history)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.circle, size: 8, color: AppTheme.unidaBlue),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${h.from} → ${h.to}${h.note != null ? ' (${h.note})' : ''}',
+                            style: const TextStyle(fontSize: 12, color: AppTheme.unidaText),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
