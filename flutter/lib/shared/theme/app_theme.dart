@@ -14,6 +14,25 @@ class AppTheme {
   static const Color unidaBg = Color(0xFFF1F5F9);
   static const Color unidaText = Color(0xFF0F172A);
 
+  // Brand Topbar Gradient (kiri agak muda ke kanan warna navy sekarang)
+  static const LinearGradient topBarGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [unidaBlue, unidaBlueHover, unidaNavy],
+    stops: [0.0, 0.40, 1.0],
+  );
+
+  static const BoxDecoration topBarDecoration = BoxDecoration(
+    gradient: topBarGradient,
+    border: Border(
+      bottom: BorderSide(color: unidaGold, width: 2),
+    ),
+  );
+
+  static Widget get topBarFlexibleSpace => Container(
+    decoration: topBarDecoration,
+  );
+
   // Semantics
   static const Color surface = Colors.white;
   static const Color surfaceMuted = Color(0xFFF8FAFC);
@@ -77,7 +96,7 @@ class AppTheme {
           return const TextStyle(color: Color(0xCCFFFFFF), fontWeight: FontWeight.w500, fontSize: 11);
         }),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
