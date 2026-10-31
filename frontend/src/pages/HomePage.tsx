@@ -107,6 +107,103 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* 3 Keunggulan Pasar Civitas UNIDA */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 'var(--space-4)',
+        }}
+        aria-label="Keunggulan SOUQNA"
+      >
+        <div
+          className="card"
+          style={{
+            padding: 'var(--space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            borderLeft: '4px solid var(--unida-gold)',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--gold-soft)',
+              padding: 10,
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--unida-navy)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <TruckIcon size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: 2 }}>Bayar di Tempat (COD)</h3>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0 }}>Transaksi aman & langsung saat pesanan tiba</p>
+          </div>
+        </div>
+
+        <div
+          className="card"
+          style={{
+            padding: 'var(--space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            borderLeft: '4px solid var(--unida-blue)',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--info-soft)',
+              padding: 10,
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--unida-blue)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ShieldIcon size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: 2 }}>Civitas Terverifikasi</h3>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0 }}>Penjual dari mahasiswa, staf, & unit resmi kampus</p>
+          </div>
+        </div>
+
+        <div
+          className="card"
+          style={{
+            padding: 'var(--space-4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            borderLeft: '4px solid var(--success)',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--success-soft)',
+              padding: 10,
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--success)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <StoreIcon size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: 2 }}>Bebas Biaya Admin</h3>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0 }}>100% harga transparan tanpa potongan tersembunyi</p>
+          </div>
+        </div>
+      </section>
+
       {error && (
         <Alert variant="danger">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
