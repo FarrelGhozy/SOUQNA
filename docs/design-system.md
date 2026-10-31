@@ -26,6 +26,23 @@ klaim afiliasi resmi.
    minimal 44×44 px.
 7. **Tidak memperluas scope.** Design system tidak menambah fitur bisnis baru.
 
+### 1.1 Identitas Brand & Logo Resmi
+
+Identitas visual SOUQNA mengadopsi empat pilar simbolik:
+
+1. **Tas Belanja (Shopping Bag)**: Representasi pasar digital kampus, perniagaan UMKM, dan kemudahan transaksi civitas akademika.
+2. **Siluet Kubah Masjid**: Menegaskan nafas islami Universitas Darussalam Gontor, nilai amanah, dan muamalah syariah yang jujur dan berkah.
+3. **Lengkungan Huruf 'S' (Dynamic S-Wave)**: Pita dinamis inisial SOUQNA yang menjembatani pembeli mahasiswa/dosen dan merchant kampus.
+4. **Titik Emas (Gold Dot)**: Kepastian harga, transparansi COD, dan integritas komunitas kampus.
+
+Varian Asset & File Kanonik:
+- **Favicon & App Icon**: `frontend/public/favicon.svg` (SVG dinamis), `apple-touch-icon.png` (180×180), `favicon.png` (32×32).
+- **Logo Penuh Vertikal**: `frontend/public/images/logo.svg` (SVG vektor murni), `logo-512.png`, `logo-192.png`.
+- **Logo Horizontal**: `frontend/public/images/logo-horizontal.svg` (latar terang), `logo-horizontal-white.svg` (latar gelap).
+- **Lambang Mark Saja**: `frontend/public/images/logo-mark.svg`.
+- **Komponen Web React**: `frontend/src/components/ui/SouqnaLogo.tsx` (`<SouqnaLogo />` & `<SouqnaMark />`).
+- **Komponen Flutter**: `flutter/lib/shared/widgets/souqna_logo.dart` (`SouqnaLogo` & `SouqnaMark`).
+
 ---
 
 ## 2. Token warna
@@ -43,6 +60,18 @@ Sumber: config pemilik proyek. Hex ini adalah **satu-satunya sumber warna brand*
 | `unida-gold` | `#D4AF37` | Aksen, underline aktif, badge, border tipis |
 | `unida-bg` | `#F1F5F9` | Background halaman |
 | `unida-text` | `#0F172A` | Teks utama |
+
+### 2.1.1 Gradasi Top Bar (Header & AppBar)
+
+- **Formula**: Linear gradient horizontal dari kiri ke kanan.
+  - Sisi kiri (area logo/brand): `#1E6091` (`unida-blue`, biru agak muda).
+  - Transisi tengah: `#164E77` (`unida-blue-hover`).
+  - Sisi kanan (area navigasi/aksi): `#0B2A4A` (`unida-navy`, warna kanonik sekarang).
+  - Garis aksen bawah: `2px solid #D4AF37` (`unida-gold`).
+- **Tujuan**: Mencegah logo & lambang tersamarkan oleh latar belakang gelap yang monoton, sekaligus memberikan kedalaman visual yang modern dan tetap berada dalam palet Biru UNIDA Gontor.
+- **Implementasi**:
+  - Web CSS: `--topbar-bg: linear-gradient(90deg, #1E6091 0%, #164E77 40%, #0B2A4A 100%);`
+  - Flutter: `AppTheme.topBarGradient` & `AppTheme.topBarFlexibleSpace`.
 
 ### 2.2 Token semantik turunan
 
@@ -219,6 +248,13 @@ Jangan menampilkan enum mentah ke pengguna.
 
 - Web publik desktop: header navy, wordmark putih, link putih, active gold.
 - Web publik mobile: bottom nav 5 tab: Beranda, Cari, Keranjang, Pesanan, Akun.
+- Lockup logo topbar (web + Flutter harus sama):
+  - Web: `<SouqnaLogo variant="horizontal" theme="dark" size="md" subtext="UNIDA Gontor" />`
+    (`frontend/src/layouts/layouts.tsx`), mark 28 px + wordmark 21 px putih + subtext putih 70%.
+  - Flutter: `SouqnaLogo(size: SouqnaLogoSize.md, isDark: true, subtext: 'UNIDA Gontor')`
+    (`flutter/lib/app/bottom_nav.dart`), mark 26 px + wordmark 20 px putih + subtext putih 70%.
+  - Jangan memakai `size.sm` di topbar; `sm` terlalu kecil di HP dan membuat
+    mark terlihat buram. Tinggi AppBar Flutter 64 px mengikuti header web 64 px.
 - Merchant/admin desktop: sidebar navy; item aktif memakai background biru gelap
   dan indikator gold di kiri.
 - Flutter: `NavigationBar`/`BottomNavigationBar` 5 tab; AppBar navy.
