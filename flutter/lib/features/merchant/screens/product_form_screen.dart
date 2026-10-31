@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../mocks/categories_mock.dart';
+import '../../../shared/theme/app_theme.dart';
 
 // Form tambah/edit produk milik sendiri + kelola varian.
 class ProductFormScreen extends StatefulWidget {
@@ -146,7 +147,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(isNew ? 'Tambah produk' : 'Edit produk')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: Text(isNew ? 'Tambah produk' : 'Edit produk'),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
