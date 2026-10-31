@@ -62,6 +62,10 @@ setiap penyimpangan code punya issue perbaikan yang jelas. Baseline
 | C13 | P2 | Tidak ada unit/component test, lint, typecheck script, CI | Tidak ada file test/config di repo | Regresi tidak terdeteksi | #19 |
 | C14 | P1 | Navbar campur pembeli+penjual; tanpa mode fokus saat buka toko | `frontend/src/layouts/layouts.tsx:22-227` sebelum M13 | Merchant tidak fokus jualan, risiko salah konteks | M13, diperbaiki 2026-10-30 |
 | C15 | P2 | Card produk tanpa nama toko | `frontend/src/components/ProductCard.tsx:8-92` sebelum M13 | Pembeli tidak tahu asal toko di katalog | M13, diperbaiki 2026-10-30 |
+| C16 | P1 | Double Scaffold & AppBar pada mode penjual Flutter | `flutter/lib/app/bottom_nav.dart` & layar merchant | Dua AppBar bertumpuk vertikal dan navigasi tumpang tindih | M13 polish, diperbaiki 2026-10-30 |
+| C17 | P1 | Navigasi toggle sellerMode Flutter tidak reset indeks tab | `flutter/lib/app/bottom_nav.dart:36-45` | Masuk mode toko dari tab 4 (Akun) langsung dialihkan ke tab 4 (Pasar) | M13 polish, diperbaiki 2026-10-30 |
+| C18 | P2 | Nama toko pada ProductCard Flutter belum berupa tautan navigasi | `flutter/lib/shared/widgets/product_card.dart` | Pembeli tidak bisa membuka detail toko langsung dari card | M13 polish, diperbaiki 2026-10-30 |
+| C19 | P2 | Status order dan produk Flutter masih menampilkan enum mentah | Layar `orders_screen.dart`, `order_detail_screen.dart`, `product_list_screen.dart` | Tidak ramah pengguna, inkonsisten dengan Web | M13 polish, diperbaiki 2026-10-30 via `StatusBadge` |
 
 ## 4. Matriks status kapabilitas
 
