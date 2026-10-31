@@ -47,10 +47,12 @@ mengatur routing.
 
 - Pembeli (default): Beranda, Cari, Kategori, Keranjang, Pesanan, Wishlist,
   Chat. Mobile: Beranda, Cari, Keranjang, Pesanan, Akun.
-- Penjual (`seller_mode` + `hasStore`): header/sidebar/bottom-nav ganti fokus
+- Penjual (`seller_mode` + `hasStore`): header top bar & mobile bottom-nav ganti fokus
   jualan — Ringkasan, Produk, Pesanan Masuk, Pengaturan Toko, plus tombol
-  persisten `Kembali ke Pasar` / `Ke Pembeli`. Navbar pembeli disembunyikan
-  total agar tidak campur konteks (rekomendasi Seller Centre).
+  persisten `Kembali ke Pasar` / `Ke Pembeli`. Sidebar merchant desktop dihilangkan
+  karena navigasi sudah terpusat di top bar dan memberikan ruang penuh pada tabel
+  serta formulir produk. Navbar pembeli disembunyikan total agar tidak campur
+  konteks (rekomendasi Seller Centre).
 - Masuk `/merchant*` otomatis aktifkan mode; keluar hapus flag per-user.
   Guard `RequireMerchant` tetap cek `hasStore`, mode tidak membuka akses.
 
