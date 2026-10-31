@@ -9,6 +9,9 @@
   --unida-bg: #F1F5F9;
   --unida-text: #0F172A;
 
+  /* Brand Topbar Gradient (kiri agak muda ke kanan warna navy sekarang) */
+  --topbar-bg: linear-gradient(90deg, #1E6091 0%, #164E77 40%, #0B2A4A 100%);
+
   /* Semantic Surfaces & Borders */
   --surface: #FFFFFF;
   --surface-muted: #F8FAFC;
