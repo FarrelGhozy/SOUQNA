@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/auth/mock_auth.dart';
+import '../../../shared/theme/app_theme.dart';
 import 'thread_screen.dart';
 
 // Daftar thread chat milik user (pembeli + toko miliknya).
@@ -52,7 +53,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: const Text('Chat'),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : _auth.session.value == null
