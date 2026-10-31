@@ -116,7 +116,9 @@ class _SearchScreenState extends State<SearchScreen> {
                         ? const Center(child: Text('Tidak ada produk. Coba kata kunci / filter lain.'))
                         : GridView.count(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.72,
+                            childAspectRatio: 0.65,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
                             children: prods.map((p) => ProductCard(
                               p: p,
                               storeName: storeMap[p.storeId],
