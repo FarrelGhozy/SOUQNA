@@ -1,0 +1,268 @@
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
+const List<String> _goldMarkPaths = [
+  'M 528.5 300.1 c -0.9 1.4 3.5 6.7 10.5 12.6 4.2 3.5 12.8 8.6 24.2 14.4 20.7 10.5 27.0 14.6 35.7 23.1 10.5 10.3 16.1 20.9 19.5 36.9 0.4 2.0 2.1 3.4 7.1 5.9 3.9 2.0 10.0 6.5 15.1 11.3 4.6 4.4 8.8 7.7 9.1 7.3 0.4 -0.4 -0.3 -12.2 -1.5 -26.4 -5.5 -63.9 -6.2 -72.5 -6.2 -77.3 0.0 -9.7 5.6 -8.8 -57.5 -8.8 -31.6 -0.0 -55.7 0.4 -56.0 1.0 z',
+  'M 510.7 304.7 c -8.8 12.3 -20.6 21.1 -43.7 32.7 -19.0 9.5 -22.2 11.6 -30.6 20.0 -8.4 8.4 -11.7 13.8 -14.0 22.6 -3.3 13.1 0.0 26.0 9.1 35.2 4.7 4.8 13.2 10.4 14.2 9.4 0.3 -0.3 -0.1 -2.9 -1.1 -5.8 -5.2 -17.0 -4.0 -29.3 4.1 -41.1 4.0 -5.8 13.3 -12.2 29.8 -20.4 16.5 -8.3 21.2 -11.2 29.8 -18.6 6.4 -5.5 5.5 -5.6 13.3 1.4 5.6 5.0 10.3 7.9 23.7 14.6 25.1 12.5 32.6 18.2 38.0 29.2 3.1 6.4 3.2 6.9 3.2 19.4 -0.1 14.4 -1.0 13.0 9.4 14.2 7.4 0.8 17.1 5.4 23.0 11.0 4.9 4.6 10.1 13.1 10.1 16.6 0.0 1.4 23.4 25.9 24.8 25.9 0.7 -0.0 -0.6 -18.8 -1.9 -27.0 -2.6 -17.0 -16.0 -34.5 -32.9 -42.9 -4.6 -2.3 -8.6 -4.4 -8.8 -4.6 -0.2 -0.2 -1.0 -3.7 -1.7 -7.7 -1.9 -10.7 -5.0 -17.9 -10.8 -25.5 -7.2 -9.3 -16.7 -16.1 -34.6 -24.9 -20.1 -10.0 -31.6 -17.7 -39.1 -26.4 -3.2 -3.8 -6.4 -7.8 -7.0 -9.0 -1.6 -2.9 -3.3 -2.5 -6.3 1.7 z',
+  'M 658.0 575.2 c -3.4 6.2 -10.6 15.3 -17.5 22.4 -5.7 5.8 -19.3 15.6 -23.5 16.9 -1.1 0.4 -2.0 1.1 -2.0 1.6 0.0 1.1 49.7 1.3 50.3 0.1 0.3 -0.5 -2.7 -42.7 -3.2 -45.0 -0.3 -1.2 -2.2 0.6 -4.1 4.0 z'
+];
+
+const List<String> _navyMarkPaths = [
+  'M 498.7 206.0 c -12.0 2.1 -23.6 7.1 -33.4 14.4 -13.1 9.9 -21.9 22.2 -27.4 38.6 -3.0 8.9 -3.2 10.4 -3.3 24.5 l -0.1 15.0 9.0 -0.0 9.0 -0.0 0.6 -14.0 c 0.4 -9.3 1.2 -15.7 2.3 -19.0 6.9 -19.7 23.8 -35.5 42.7 -40.0 29.7 -7.0 58.6 8.8 70.0 38.2 1.8 4.7 2.3 8.6 2.8 20.8 l 0.6 15.0 9.0 -0.0 9.0 -0.1 0.3 -12.7 c 0.3 -16.0 -1.9 -26.2 -8.5 -39.7 -4.0 -7.9 -6.2 -10.9 -13.8 -18.5 -12.6 -12.6 -23.5 -18.6 -39.7 -21.9 -8.1 -1.7 -21.0 -1.9 -29.1 -0.6 z',
+  'M 499.0 300.0 c 0.0 0.5 0.5 1.0 1.1 1.0 0.5 -0.0 0.7 -0.5 0.4 -1.0 -0.3 -0.6 -0.8 -1.0 -1.1 -1.0 -0.2 -0.0 -0.4 0.4 -0.4 1.0 z',
+  'M 372.0 447.7 c 0.0 0.8 -5.5 71.7 -10.5 135.8 -1.4 17.5 -2.1 32.3 -1.7 32.7 0.5 0.5 46.5 0.7 102.3 0.6 l 101.4 -0.3 7.7 -2.6 c 8.3 -2.8 18.5 -9.5 23.6 -15.4 6.8 -7.6 12.6 -22.8 13.8 -35.6 0.6 -6.5 -1.2 -23.9 -2.5 -23.9 -0.3 -0.0 -2.1 3.1 -3.8 6.9 -5.8 12.3 -19.3 21.9 -33.8 24.1 -4.5 0.7 -33.7 0.9 -82.0 0.8 l -75.0 -0.3 0.1 -8.0 c 0.2 -9.0 4.1 -66.2 4.9 -71.1 0.5 -3.1 0.3 -3.3 -7.1 -7.4 -4.3 -2.2 -10.6 -6.4 -14.1 -9.1 -6.2 -5.0 -17.1 -18.3 -20.1 -24.6 -1.4 -3.0 -3.2 -4.4 -3.2 -2.6 z',
+  'M 587.6 489.0 c -3.8 0.3 -7.1 0.9 -7.3 1.5 -0.1 0.5 1.8 2.3 4.4 4.0 6.1 3.8 16.4 13.5 20.7 19.4 4.5 6.0 9.5 18.6 11.2 28.1 4.4 24.6 -2.1 48.7 -17.4 64.7 -2.9 3.1 -5.1 5.7 -4.9 5.9 0.7 0.7 12.0 -3.6 18.9 -7.1 23.0 -11.6 40.1 -34.4 44.4 -59.0 6.1 -34.5 -25.8 -60.7 -70.0 -57.5 z'
+];
+
+const List<String> _blueMarkPaths = [
+  'M 407.8 298.7 c -24.7 0.3 -24.8 0.3 -25.3 2.6 -0.3 1.2 -1.9 19.1 -3.5 39.7 -1.6 20.6 -3.3 40.7 -3.6 44.6 -0.9 10.2 0.9 17.3 7.1 28.6 4.4 7.8 20.1 18.0 33.0 21.3 10.7 2.8 32.5 3.2 32.5 0.6 0.0 -0.4 -2.3 -1.5 -5.1 -2.5 -6.3 -2.3 -15.4 -9.0 -20.1 -14.7 -18.5 -22.5 -12.9 -52.8 13.5 -73.7 7.6 -6.1 12.6 -9.1 29.8 -17.8 16.1 -8.1 22.8 -12.6 29.2 -19.3 3.7 -3.8 4.7 -5.5 4.2 -7.1 -0.6 -2.0 -1.4 -2.0 -31.8 -2.0 -17.2 -0.0 -32.1 -0.1 -33.2 -0.3 -1.1 -0.1 -13.1 -0.1 -26.7 -0.0 z',
+  'M 649.0 413.4 c 0.0 0.9 0.5 1.6 1.0 1.6 0.6 -0.0 1.0 -0.4 1.0 -0.9 0.0 -0.6 -0.4 -1.3 -1.0 -1.6 -0.5 -0.3 -1.0 0.1 -1.0 0.9 z',
+  'M 374.6 416.7 c 3.7 28.8 16.6 48.4 39.0 59.3 3.8 1.8 7.7 3.7 8.7 4.2 0.9 0.5 5.4 1.8 10.0 3.0 7.9 2.1 10.4 2.2 66.9 2.5 55.5 0.4 59.0 0.3 67.0 -1.6 34.8 -8.2 64.9 -2.5 84.0 15.9 7.7 7.3 8.4 6.8 4.8 -3.5 -8.8 -25.6 -28.9 -44.3 -58.0 -54.1 l -8.5 -2.9 -58.5 -0.3 -58.4 -0.3 -10.6 2.7 c -9.1 2.4 -12.5 2.8 -25.5 2.8 -11.4 0.1 -16.6 -0.3 -21.5 -1.7 -8.9 -2.4 -18.4 -7.0 -24.9 -12.0 -5.9 -4.5 -13.1 -13.4 -13.1 -16.0 0.0 -1.0 -0.4 -1.7 -0.9 -1.7 -0.6 -0.0 -0.8 1.7 -0.5 3.7 z',
+  'M 661.0 568.1 c 0.0 1.1 0.5 1.7 1.0 1.4 0.6 -0.3 1.0 -1.3 1.0 -2.1 0.0 -0.8 -0.4 -1.4 -1.0 -1.4 -0.5 -0.0 -1.0 0.9 -1.0 2.1 z',
+  'M 612.8 616.7 c 0.7 0.3 1.6 0.2 1.9 -0.1 0.4 -0.3 -0.2 -0.6 -1.3 -0.5 -1.1 -0.0 -1.4 0.3 -0.6 0.6 z'
+];
+
+Path _parseSvgPath(String d) {
+  final path = Path();
+  final tokens = d.trim().split(RegExp(r'\s+'));
+  int i = 0;
+  while (i < tokens.length) {
+    final cmd = tokens[i];
+    if (cmd == 'M') {
+      final x = double.parse(tokens[i + 1]);
+      final y = double.parse(tokens[i + 2]);
+      path.moveTo(x, y);
+      i += 3;
+    } else if (cmd == 'l') {
+      final dx = double.parse(tokens[i + 1]);
+      final dy = double.parse(tokens[i + 2]);
+      path.relativeLineTo(dx, dy);
+      i += 3;
+    } else if (cmd == 'c') {
+      final dx1 = double.parse(tokens[i + 1]);
+      final dy1 = double.parse(tokens[i + 2]);
+      final dx2 = double.parse(tokens[i + 3]);
+      final dy2 = double.parse(tokens[i + 4]);
+      final dx = double.parse(tokens[i + 5]);
+      final dy = double.parse(tokens[i + 6]);
+      path.relativeCubicTo(dx1, dy1, dx2, dy2, dx, dy);
+      i += 7;
+    } else if (cmd == 'z' || cmd == 'Z') {
+      path.close();
+      i += 1;
+    } else {
+      i += 1;
+    }
+  }
+  return path;
+}
+
+/// Simbol resmi SOUQNA: Tas belanja + Siluet Kubah + Lengkungan 'S'
+class SouqnaMark extends StatelessWidget {
+  final double size;
+  final bool isWhite;
+
+  const SouqnaMark({
+    super.key,
+    this.size = 28,
+    this.isWhite = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final height = size * (450.0 / 340.0);
+    return SizedBox(
+      width: size,
+      height: height,
+      child: CustomPaint(
+        painter: _SouqnaMarkPainter(isWhite: isWhite),
+      ),
+    );
+  }
+}
+
+class _SouqnaMarkPainter extends CustomPainter {
+  final bool isWhite;
+
+  static Path? _cachedGold;
+  static Path? _cachedNavy;
+  static Path? _cachedBlue;
+
+  _SouqnaMarkPainter({required this.isWhite}) {
+    if (_cachedGold == null) {
+      final pGold = Path();
+      for (final s in _goldMarkPaths) {
+        pGold.addPath(_parseSvgPath(s), Offset.zero);
+      }
+      _cachedGold = pGold;
+
+      final pNavy = Path();
+      for (final s in _navyMarkPaths) {
+        pNavy.addPath(_parseSvgPath(s), Offset.zero);
+      }
+      _cachedNavy = pNavy;
+
+      final pBlue = Path();
+      for (final s in _blueMarkPaths) {
+        pBlue.addPath(_parseSvgPath(s), Offset.zero);
+      }
+      _cachedBlue = pBlue;
+    }
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 340.0, size.height / 450.0);
+    canvas.translate(-340.0, -180.0);
+
+    final goldPaint = Paint()..color = AppTheme.unidaGold..style = PaintingStyle.fill;
+    final navyPaint = Paint()
+      ..color = isWhite ? Colors.white : AppTheme.unidaNavy
+      ..style = PaintingStyle.fill;
+    final bluePaint = Paint()
+      ..color = isWhite ? const Color(0xFF38BDF8) : AppTheme.unidaBlue
+      ..style = PaintingStyle.fill;
+
+    if (_cachedGold != null) canvas.drawPath(_cachedGold!, goldPaint);
+    if (_cachedNavy != null) canvas.drawPath(_cachedNavy!, navyPaint);
+    if (_cachedBlue != null) canvas.drawPath(_cachedBlue!, bluePaint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _SouqnaMarkPainter oldDelegate) {
+    return oldDelegate.isWhite != isWhite;
+  }
+}
+
+enum SouqnaLogoSize { sm, md, lg }
+
+/// Widget Logo resmi SOUQNA (Lockup Lambang + Wordmark SOUQNA.)
+class SouqnaLogo extends StatelessWidget {
+  final SouqnaLogoSize size;
+  final bool isDark;
+  final bool isVertical;
+  final String? subtext;
+
+  const SouqnaLogo({
+    super.key,
+    this.size = SouqnaLogoSize.md,
+    this.isDark = false,
+    this.isVertical = false,
+    this.subtext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double markSize;
+    final double fontSize;
+    final double dotSize;
+
+    switch (size) {
+      case SouqnaLogoSize.sm:
+        markSize = 20;
+        fontSize = 16;
+        dotSize = 4;
+        break;
+      case SouqnaLogoSize.md:
+        markSize = 26;
+        fontSize = 20;
+        dotSize = 6;
+        break;
+      case SouqnaLogoSize.lg:
+        markSize = 40;
+        fontSize = 28;
+        dotSize = 8;
+        break;
+    }
+
+    final textColor = isDark ? Colors.white : AppTheme.unidaNavy;
+    final subtextColor = isDark ? Colors.white70 : AppTheme.muted;
+
+    final wordmark = Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          'S',
+          style: TextStyle(
+            color: AppTheme.unidaGold,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.8,
+          ),
+        ),
+        Text(
+          'OUQNA',
+          style: TextStyle(
+            color: textColor,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(width: 2),
+        Container(
+          width: dotSize,
+          height: dotSize,
+          decoration: const BoxDecoration(
+            color: AppTheme.unidaGold,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ],
+    );
+
+    if (isVertical) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SouqnaMark(size: markSize * 1.6, isWhite: isDark),
+          const SizedBox(height: 8),
+          wordmark,
+          if (subtext != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtext!,
+              style: TextStyle(
+                color: subtextColor,
+                fontSize: fontSize * 0.55,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SouqnaMark(size: markSize, isWhite: isDark),
+        const SizedBox(width: 8),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            wordmark,
+            if (subtext != null)
+              Text(
+                subtext!,
+                style: TextStyle(
+                  color: subtextColor,
+                  fontSize: fontSize * 0.55,
+                  fontWeight: FontWeight.w500,
+                  height: 1.1,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
