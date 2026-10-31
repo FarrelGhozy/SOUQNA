@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/utils/money.dart';
+import '../../../shared/theme/app_theme.dart';
 
 // Ringkasan multi-merchant: 1 checkout → N orders independen.
 class CheckoutSuccessScreen extends StatelessWidget {
@@ -10,7 +11,10 @@ class CheckoutSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout berhasil')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: const Text('Checkout berhasil'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
