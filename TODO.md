@@ -70,8 +70,9 @@ Lihat `docs/implementation-audit.md` untuk gap yang masih ada.
 - [x] Mode penjual web: `seller_mode` per-user, navbar ganti fokus jualan, tombol kembali ke pasar.
 - [x] Mode penjual Flutter: `sellerMode` + bottom nav seller, tombol ke pembeli.
 - [x] Nama toko di card web + Flutter via `getStores()` sekali, parity ID.
+- [x] Polish UI/UX Flutter & Web M13: eliminasi double Scaffold/AppBar di Flutter (`isEmbedded: true`), reset otomatis indeks tab saat toggle mode, nama toko di ProductCard sebagai tautan ke `StoreDetailScreen`, shared `StatusBadge` untuk label status Bahasa Indonesia, serta 3-pillar Trust Bar dan styling kartu profesional enterprise-grade UNIDA Gontor.
 - [x] Regression: build/tsc/demo-e2e lolos, guard `hasStore` tetap otorisasi.
-  Bukti 2026-10-30: `bun run verify` (tsc 0 error, 22 unit tests pass, build 262ms) dan `./scripts/demo-e2e.sh` lolos 100%.
+  Bukti 2026-10-30: `bun run verify` (tsc 0 error, 22 unit tests pass, build sukses) dan `./scripts/demo-e2e.sh` lolos 100%.
 
 ## Backlog (setelah M12)
 
