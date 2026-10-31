@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/api/api_client.dart';
 import '../../../mocks/products_mock.dart';
 import '../../../mocks/stores_mock.dart';
+import '../../../shared/theme/app_theme.dart';
 import '../../../shared/widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
@@ -43,7 +44,10 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Toko')),
+      appBar: AppBar(
+        flexibleSpace: AppTheme.topBarFlexibleSpace,
+        title: const Text('Detail Toko'),
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error != null
@@ -72,7 +76,9 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 0.72,
+          childAspectRatio: 0.65,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
           children: prods.map((p) => ProductCard(
             p: p,
             storeName: s.name,
