@@ -152,9 +152,63 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                ElevatedButton(
-                  onPressed: busy ? null : () => _go(() => _auth.loginWithEmail(_email.text)),
-                  child: Text(busy ? 'Memproses...' : 'Masuk Sekarang'),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: busy ? null : () => _go(() => _auth.loginWithEmail(_email.text)),
+                    child: Text(busy ? 'Memproses...' : 'Masuk Sekarang'),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: AppTheme.border)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'atau',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.muted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider(color: AppTheme.border)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Login dengan Google akan aktif pada Tahap 2 (SSO Kampus). Silakan gunakan email demo.',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.unidaText,
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: AppTheme.border),
+                      minimumSize: const Size(double.infinity, 46),
+                    ),
+                    icon: Image.asset(
+                      'assets/images/google-logo.png',
+                      width: 20,
+                      height: 20,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.g_mobiledata,
+                        size: 24,
+                        color: AppTheme.unidaBlue,
+                      ),
+                    ),
+                    label: const Text('Masuk dengan Google'),
+                  ),
                 ),
               ],
             ),
@@ -170,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 10),
         _buildRolePresetCard(
           role: 'buyer',
-          name: 'Budi Santoso',
+          name: 'Budi Pembeli',
           email: 'budi@kampus.ac.id',
           roleLabel: 'Pembeli (Mahasiswa)',
           icon: Icons.school_outlined,
@@ -179,8 +233,8 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         _buildRolePresetCard(
           role: 'merchant',
-          name: 'Siti Aminah',
-          email: 'siti@kampus.ac.id',
+          name: 'Siti Kantin',
+          email: 'siti@kantin.id',
           roleLabel: 'Pemilik Toko (Merchant SOUQNA)',
           icon: Icons.storefront,
           color: AppTheme.unidaNavy,
@@ -188,8 +242,8 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         _buildRolePresetCard(
           role: 'admin',
-          name: 'Administrator Kampus',
-          email: 'admin@kampus.ac.id',
+          name: 'Admin Souqna',
+          email: 'admin@souqna.id',
           roleLabel: 'Pengelola Sistem (Admin)',
           icon: Icons.admin_panel_settings_outlined,
           color: AppTheme.warning,

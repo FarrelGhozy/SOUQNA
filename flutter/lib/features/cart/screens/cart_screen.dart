@@ -52,6 +52,25 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
+    // Tampilkan error walau keranjang kosong — jangan telan exception jadi empty state.
+    if (err != null && lines.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.danger),
+              const SizedBox(height: 12),
+              Text(err!, textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.danger, fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _reload, child: const Text('Muat Ulang')),
+            ],
+          ),
+        ),
+      );
+    }
     if (lines.isEmpty) {
       return Center(
         child: Padding(

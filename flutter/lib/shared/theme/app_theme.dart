@@ -132,7 +132,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: unidaBlue,
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(44),
+          minimumSize: const Size(0, 44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -144,7 +144,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: unidaNavy,
           side: const BorderSide(color: borderStrong),
-          minimumSize: const Size.fromHeight(44),
+          minimumSize: const Size(0, 44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

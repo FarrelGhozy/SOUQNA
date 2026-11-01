@@ -49,12 +49,44 @@ Path _parseSvgPath(String d) {
       } else {
         break;
       }
+    } else if (currentCmd == 'm') {
+      if (i + 1 < tokens.length) {
+        final dx = double.parse(tokens[i]);
+        final dy = double.parse(tokens[i + 1]);
+        path.relativeMoveTo(dx, dy);
+        i += 2;
+        currentCmd = 'l';
+      } else {
+        break;
+      }
+    } else if (currentCmd == 'L') {
+      if (i + 1 < tokens.length) {
+        final x = double.parse(tokens[i]);
+        final y = double.parse(tokens[i + 1]);
+        path.lineTo(x, y);
+        i += 2;
+      } else {
+        break;
+      }
     } else if (currentCmd == 'l') {
       if (i + 1 < tokens.length) {
         final dx = double.parse(tokens[i]);
         final dy = double.parse(tokens[i + 1]);
         path.relativeLineTo(dx, dy);
         i += 2;
+      } else {
+        break;
+      }
+    } else if (currentCmd == 'C') {
+      if (i + 5 < tokens.length) {
+        final x1 = double.parse(tokens[i]);
+        final y1 = double.parse(tokens[i + 1]);
+        final x2 = double.parse(tokens[i + 2]);
+        final y2 = double.parse(tokens[i + 3]);
+        final x = double.parse(tokens[i + 4]);
+        final y = double.parse(tokens[i + 5]);
+        path.cubicTo(x1, y1, x2, y2, x, y);
+        i += 6;
       } else {
         break;
       }

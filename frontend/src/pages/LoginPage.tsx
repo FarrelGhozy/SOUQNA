@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button.js';
 import { Input } from '../components/ui/Input.js';
 import { Alert } from '../components/ui/Alert.js';
 import { Badge } from '../components/ui/Badge.js';
+import { GoogleIcon } from '../components/ui/Icons.js';
 
 export function LoginPage() {
   const nav = useNavigate();
@@ -63,6 +64,37 @@ export function LoginPage() {
           Masuk
         </Button>
       </form>
+
+      {/* Divider atau */}
+      <div style={{ display: 'flex', alignItems: 'center', margin: 'var(--space-1) 0', gap: 'var(--space-3)' }}>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+        <span style={{ fontSize: '12px', color: 'var(--muted)', fontWeight: 500 }}>atau</span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+      </div>
+
+      {/* Tombol Masuk dengan Google (UI) */}
+      <Button
+        type="button"
+        variant="secondary"
+        size="lg"
+        onClick={() => {
+          setErr('Login dengan Google akan aktif pada Tahap 2 (Integrasi SSO Kampus). Silakan gunakan email demo atau preset di bawah.');
+        }}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          background: 'var(--surface)',
+          borderColor: 'var(--border)',
+          color: 'var(--unida-text)',
+          fontWeight: 600,
+        }}
+      >
+        <GoogleIcon size={18} />
+        <span>Masuk dengan Google</span>
+      </Button>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>
         <Link to="/reset-password" style={{ color: 'var(--unida-blue)' }}>
