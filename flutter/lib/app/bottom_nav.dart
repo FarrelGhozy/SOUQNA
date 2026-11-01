@@ -148,7 +148,6 @@ class _BottomNavState extends State<BottomNav> {
                 ? const SouqnaLogo(
                     size: SouqnaLogoSize.md,
                     isDark: true,
-                    subtext: 'UNIDA Gontor',
                   )
                 : Text(currentTitle),
             actions: [

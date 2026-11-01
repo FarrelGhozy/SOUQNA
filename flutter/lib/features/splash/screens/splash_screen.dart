@@ -134,10 +134,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                       const SizedBox(height: 24),
 
-                      // Wordmark resmi
+                      // Wordmark resmi SOUQNA
                       Image.asset(
-                        'assets/images/logo-horizontal-white.png',
-                        height: 38,
+                        'assets/images/logo-text-white.png',
+                        height: 34,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Row(
                           mainAxisSize: MainAxisSize.min,

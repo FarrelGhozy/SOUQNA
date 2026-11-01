@@ -184,17 +184,17 @@ class SouqnaLogo extends StatelessWidget {
     switch (size) {
       case SouqnaLogoSize.sm:
         markSize = 20;
-        fontSize = 16;
-        dotSize = 4;
+        fontSize = 18;
+        dotSize = 5;
         break;
       case SouqnaLogoSize.md:
-        markSize = 26;
-        fontSize = 20;
+        markSize = 28;
+        fontSize = 24;
         dotSize = 6;
         break;
       case SouqnaLogoSize.lg:
         markSize = 40;
-        fontSize = 28;
+        fontSize = 32;
         dotSize = 8;
         break;
     }
@@ -283,44 +283,63 @@ class SouqnaLogo extends StatelessWidget {
       );
     }
 
-    final double hImgHeight;
+    final double markHeight;
+    final double textHeight;
     switch (size) {
       case SouqnaLogoSize.sm:
-        hImgHeight = 22;
+        markHeight = 24;
+        textHeight = 18;
         break;
       case SouqnaLogoSize.md:
-        hImgHeight = 30;
+        markHeight = 34;
+        textHeight = 25;
         break;
       case SouqnaLogoSize.lg:
-        hImgHeight = 42;
+        markHeight = 44;
+        textHeight = 32;
         break;
     }
 
-    final logoImg = Image.asset(
+    final markWidget = Image.asset(
       isDark
-          ? 'assets/images/logo-horizontal-white.png'
-          : 'assets/images/logo-horizontal.png',
-      height: hImgHeight,
+          ? 'assets/images/logo-mark-white.png'
+          : 'assets/images/logo-mark.png',
+      height: markHeight,
       fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SouqnaMark(size: markSize, isWhite: isDark),
-          const SizedBox(width: 8),
-          wordmark,
-        ],
+      errorBuilder: (_, __, ___) => SouqnaMark(
+        size: markHeight * (340.0 / 450.0),
+        isWhite: isDark,
       ),
     );
 
+    final textWidget = Image.asset(
+      isDark
+          ? 'assets/images/logo-text-white.png'
+          : 'assets/images/logo-text.png',
+      height: textHeight,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => wordmark,
+    );
+
+    final lockup = Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        markWidget,
+        const SizedBox(width: 8),
+        textWidget,
+      ],
+    );
+
     if (subtext == null) {
-      return logoImg;
+      return lockup;
     }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        logoImg,
+        lockup,
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
