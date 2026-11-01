@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../features/splash/screens/splash_screen.dart';
 import '../shared/theme/app_theme.dart';
-import 'bottom_nav.dart';
 
 class SouqnaApp extends StatelessWidget {
   const SouqnaApp({super.key});
@@ -10,7 +10,7 @@ class SouqnaApp extends StatelessWidget {
       title: 'SOUQNA',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const BottomNav(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -640,9 +640,9 @@ export const api = {
   async getStore(id: string) { await delay(); return allStores().find((s) => s.id === id) ?? null; },
   async getStoreProducts(storeId: string) { await delay(); return allProducts().filter((p) => p.store_id === storeId && p.status === 'published'); },
 
-  async getMe() { await delay(150); return currentSession(); },
+  async getMe() { await delay(30); return currentSession(); },
   async updateMe(patch: { full_name?: string; phone?: string; default_location?: string }) {
-    await delay(200);
+    await delay(40);
     return updateProfile(patch);
   },
 
@@ -650,7 +650,7 @@ export const api = {
   async getCart(): Promise<CartLine[]> { await delay(); return loadCart(); },
   async getCartDetailed(): Promise<CartDetailed[]> { await delay(); return loadCart().map(detailLine); },
   async addToCart(variantId: string, quantity = 1) {
-    await delay(150);
+    await delay(30);
     const r = resolveVariant(variantId);
     if (!r) throw new Error('Varian tidak ditemukan.');
     if (r.product.status !== 'published') throw new Error('Produk disembunyikan.');
@@ -667,7 +667,7 @@ export const api = {
     return cart;
   },
   async updateCartItemQty(id: string, quantity: number) {
-    await delay(150);
+    await delay(30);
     const cart = loadCart();
     const it = cart.find((c) => c.id === id);
     if (!it) throw new Error('Item tidak ada di keranjang.');
@@ -683,20 +683,20 @@ export const api = {
     return cart;
   },
   async removeCartItem(id: string) {
-    await delay(150);
+    await delay(30);
     const next = loadCart().filter((c) => c.id !== id);
     saveCart(next);
     return next;
   },
-  async clearCart() { await delay(100); saveCart([]); return []; },
+  async clearCart() { await delay(20); saveCart([]); return []; },
 
   // --- Checkout ---
   async validateCheckout(input: CheckoutInput): Promise<CheckoutPreview> {
-    await delay(250);
+    await delay(50);
     return previewCheckout(input);
   },
   async checkout(input: CheckoutInput): Promise<CheckoutResult> {
-    await delay(400);
+    await delay(80);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk checkout.');
     // Hitung + validasi dulu (tanpa mutasi). Gagal → atomik, tanpa order/stok berubah.
@@ -791,12 +791,12 @@ export const api = {
     return allOrders().filter((o) => mine.includes(o.store_id));
   },
   async getOrderHistory(orderId: string): Promise<OrderStatusHistory[]> {
-    await delay(150);
+    await delay(30);
     return [...seedHistory, ...extraHistory()].filter((h) => h.order_id === orderId)
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   },
   async transitionOrder(orderId: string, action: OrderAction) {
-    await delay(250);
+    await delay(50);
     return applyTransition(orderId, action);
   },
   async getCheckouts() {
@@ -805,7 +805,7 @@ export const api = {
   },
   // --- Merchant dummy: toko + produk milik sendiri (simulasi server: ownership) ---
   async getMyStore(): Promise<Store | null> {
-    await delay(150);
+    await delay(30);
     const s = myStore();
     return s ? { ...s } : null;
   },
@@ -813,7 +813,7 @@ export const api = {
     name: string; description?: string; logo_url?: string;
     pickup_location: string; delivery_available: boolean; delivery_fee: number;
   }): Promise<Store> {
-    await delay(300);
+    await delay(60);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk jadi merchant.');
     if (myStore()) throw new Error('Akun ini sudah memiliki toko — 1 akun hanya 1 toko.');
@@ -841,7 +841,7 @@ export const api = {
     name?: string; description?: string; logo_url?: string;
     pickup_location?: string; delivery_available?: boolean; delivery_fee?: number;
   }): Promise<Store> {
-    await delay(250);
+    await delay(50);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -870,7 +870,7 @@ export const api = {
     return { ...s };
   },
   async getMyProducts(): Promise<Product[]> {
-    await delay(200);
+    await delay(40);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -884,7 +884,7 @@ export const api = {
     status?: Product['status']; image_url?: string;
     variants: { label: string; price: number; stock_quantity: number }[];
   }): Promise<Product> {
-    await delay(300);
+    await delay(60);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -926,7 +926,7 @@ export const api = {
     name?: string; category_id?: string; description?: string;
     status?: Product['status']; image_url?: string;
   }): Promise<Product> {
-    await delay(250);
+    await delay(50);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -953,7 +953,7 @@ export const api = {
     return { ...p, variants: p.variants.map((v) => ({ ...v })) };
   },
   async deleteMyProduct(id: string): Promise<void> {
-    await delay(250);
+    await delay(50);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -974,7 +974,7 @@ export const api = {
   async createMyVariant(productId: string, input: {
     label: string; price: number; stock_quantity: number;
   }): Promise<ProductVariant> {
-    await delay(250);
+    await delay(50);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -1000,7 +1000,7 @@ export const api = {
   async updateMyVariant(variantId: string, patch: {
     label?: string; price?: number; stock_quantity?: number; is_active?: boolean;
   }): Promise<ProductVariant> {
-    await delay(250);
+    await delay(50);
     if (!currentSession()) throw new Error('Wajib login.');
     const s = myStore();
     if (!s) throw new Error('Belum punya toko.');
@@ -1030,20 +1030,20 @@ export const api = {
   },
   // --- Wishlist per user (unique), wajib login ---
   async getWishlist(): Promise<WishlistItem[]> {
-    await delay(150);
+    await delay(30);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk membuka wishlist.');
     return allWishlist().filter((w) => w.user_id === me.id)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
   async isWishlisted(productId: string): Promise<boolean> {
-    await delay(100);
+    await delay(20);
     const me = currentSession();
     if (!me) return false;
     return allWishlist().some((w) => w.user_id === me.id && w.product_id === productId);
   },
   async addToWishlist(productId: string): Promise<WishlistItem[]> {
-    await delay(200);
+    await delay(40);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk menyimpan wishlist.');
     const p = allProducts().find((x) => x.id === productId);
@@ -1061,7 +1061,7 @@ export const api = {
     return allWishlist().filter((w) => w.user_id === me.id);
   },
   async removeFromWishlist(productId: string): Promise<WishlistItem[]> {
-    await delay(200);
+    await delay(40);
     const me = currentSession();
     if (!me) throw new Error('Wajib login.');
     const wl = extraWishlist();
@@ -1083,7 +1083,7 @@ export const api = {
 
   // --- Chat teks per toko (wajib login; purge >7 hari disimulasikan) ---
   async getConversations(): Promise<Conversation[]> {
-    await delay(150);
+    await delay(30);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk membuka chat.');
     const mineStores = new Set(allStores().filter((s) => s.owner_id === me.id).map((s) => s.id));
@@ -1091,7 +1091,7 @@ export const api = {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
   async getOrCreateConversation(storeId: string): Promise<Conversation> {
-    await delay(200);
+    await delay(40);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk chat.');
     const st = allStores().find((x) => x.id === storeId);
@@ -1107,7 +1107,7 @@ export const api = {
     return c;
   },
   async getMessages(convId: string): Promise<{ messages: Message[]; hidden: number }> {
-    await delay(150);
+    await delay(30);
     const me = currentSession();
     if (!me) throw new Error('Wajib login.');
     const conv = allConversations().find((c) => c.id === convId);
@@ -1122,7 +1122,7 @@ export const api = {
     return { messages: visible, hidden: all.length - visible.length };
   },
   async sendMessage(convId: string, body: string): Promise<Message> {
-    await delay(200);
+    await delay(40);
     const me = currentSession();
     if (!me) throw new Error('Wajib login.');
     const conv = allConversations().find((c) => c.id === convId);
@@ -1147,11 +1147,11 @@ export const api = {
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   },
   async getReviewForItem(orderItemId: string): Promise<Review | null> {
-    await delay(100);
+    await delay(20);
     return allReviews().find((r) => r.order_item_id === orderItemId) ?? null;
   },
   async createReview(orderItemId: string, rating: number, reviewText?: string): Promise<Review> {
-    await delay(250);
+    await delay(50);
     const me = currentSession();
     if (!me) throw new Error('Wajib login untuk memberi ulasan.');
     const item = [...seedOrderItems, ...extraOrderItems()].find((i) => i.id === orderItemId);
@@ -1176,7 +1176,7 @@ export const api = {
   },
   async getVouchers() { await delay(); return allVouchers(); },
   async validateVoucher(code: string, subtotal: number) {
-    await delay(200);
+    await delay(40);
     const r = voucherAmount(code, subtotal);
     if (!r.ok) return { ok: false as const, reason: (r as { reason: string }).reason };
     return { ok: true as const, amount: (r as { amount: number }).amount };
@@ -1186,7 +1186,7 @@ export const api = {
   // --- Admin (mock-first; semua aksi juga dicatat di audit log) ---
   async getAdminStats() {
     requireAdmin();
-    await delay(200);
+    await delay(40);
     const orders = allOrders();
     const byStatus: Record<string, number> = {};
     for (const o of orders) byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
@@ -1208,12 +1208,12 @@ export const api = {
   },
   async getAdminUsers() {
     requireAdmin();
-    await delay(150);
+    await delay(30);
     return allUsers();
   },
   async sendPasswordRecovery(userId: string) {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const u = allUsers().find((x) => x.id === userId);
     if (!u) throw new Error('Pengguna tidak ditemukan.');
     logAdmin('send_password_recovery', 'user', userId, { email: u.email });
@@ -1221,7 +1221,7 @@ export const api = {
   },
   async deleteAdminUser(userId: string) {
     requireAdmin();
-    await delay(300);
+    await delay(60);
     const u = allUsers().find((x) => x.id === userId);
     if (!u) throw new Error('Pengguna tidak ditemukan.');
     if (u.role === 'admin') throw new Error('Akun admin tidak dapat dihapus.');
@@ -1251,12 +1251,12 @@ export const api = {
   },
   async getAdminCategories() {
     requireAdmin();
-    await delay(150);
+    await delay(30);
     return allCategories();
   },
   async createCategory(input: { name: string; description?: string }) {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const name = input.name.trim();
     if (name.length < 3) throw new Error('Nama kategori minimal 3 karakter.');
     const slugBase = slugify(name);
@@ -1275,7 +1275,7 @@ export const api = {
   },
   async updateCategory(id: string, patch: { name?: string; description?: string; is_active?: boolean }) {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const c = allCategories().find((x) => x.id === id);
     if (!c) throw new Error('Kategori tidak ditemukan.');
     if (patch.name !== undefined) {
@@ -1290,7 +1290,7 @@ export const api = {
   },
   async deleteCategory(id: string) {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const c = allCategories().find((x) => x.id === id);
     if (!c) throw new Error('Kategori tidak ditemukan.');
     // Nonaktif saja agar produk historis tetap terbaca.
@@ -1300,7 +1300,7 @@ export const api = {
   },
   async getAdminProducts(q?: string) {
     requireAdmin();
-    await delay(200);
+    await delay(40);
     const query = (q ?? '').toLowerCase();
     return allProducts()
       .filter((p) => !query || `${p.name} ${p.slug}`.toLowerCase().includes(query))
@@ -1308,7 +1308,7 @@ export const api = {
   },
   async setProductStatusAdmin(productId: string, status: 'published' | 'hidden' | 'suspended') {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const p = allProducts().find((x) => x.id === productId);
     if (!p) throw new Error('Produk tidak ditemukan.');
     p.status = status;
@@ -1318,12 +1318,12 @@ export const api = {
   },
   async getAdminOrders() {
     requireAdmin();
-    await delay(200);
+    await delay(40);
     return allOrders();
   },
   async getAdminVouchers() {
     requireAdmin();
-    await delay(150);
+    await delay(30);
     return allVouchers().sort((a, b) => a.code.localeCompare(b.code));
   },
   async createVoucher(input: {
@@ -1332,7 +1332,7 @@ export const api = {
     starts_at: string; ends_at: string; is_active?: boolean;
   }) {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const code = input.code.trim().toUpperCase();
     if (!/^[A-Z0-9]{3,20}$/.test(code)) throw new Error('Kode 3–20 char alfanumerik.');
     if (allVouchers().some((v) => v.code === code)) throw new Error('Kode voucher sudah dipakai.');
@@ -1365,7 +1365,7 @@ export const api = {
     maximum_discount?: number; starts_at?: string; ends_at?: string; is_active?: boolean;
   }) {
     requireAdmin();
-    await delay(250);
+    await delay(50);
     const v = allVouchers().find((x) => x.id === id);
     if (!v) throw new Error('Voucher tidak ditemukan.');
     if (patch.description !== undefined) v.description = patch.description.trim();
@@ -1399,7 +1399,7 @@ export const api = {
   },
   async getAuditLogs(): Promise<AdminAuditLog[]> {
     requireAdmin();
-    await delay(150);
+    await delay(30);
     return extraAuditLogs();
   },
 };

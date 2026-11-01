@@ -71,8 +71,12 @@ Lihat `docs/implementation-audit.md` untuk gap yang masih ada.
 - [x] Mode penjual Flutter: `sellerMode` + bottom nav seller, tombol ke pembeli.
 - [x] Nama toko di card web + Flutter via `getStores()` sekali, parity ID.
 - [x] Polish UI/UX Flutter & Web M13: eliminasi double Scaffold/AppBar di Flutter (`isEmbedded: true`), reset otomatis indeks tab saat toggle mode, nama toko di ProductCard sebagai tautan ke `StoreDetailScreen`, shared `StatusBadge` untuk label status Bahasa Indonesia, serta 3-pillar Trust Bar dan styling kartu profesional enterprise-grade UNIDA Gontor.
+- [x] Logo Topbar, Latensi Mock, & Splash Screen Flutter:
+  - Topbar Logo: sinkronisasi asset resmi (`logo-horizontal-white.png`, `logo-horizontal.png`, `logo-512.png`), perbaikan parser kurva multi-koordinat SVG `_parseSvgPath` di Flutter CustomPainter, serta penggunaan SVG resmi di web agar tampilan logo di topbar HP 100% identik dengan logo asli.
+  - Latensi Mock: pemotongan simulated delay mock dari 200–400ms menjadi 20–80ms di `frontend/src/lib/api-client.ts`, `format.ts`, dan `flutter/lib/core/api/api_client.dart` agar respons aplikasi di web dan HP terasa instan, gesit, dan nyaman.
+  - Splash Screen & Launch Theme Flutter: pembuatan `SplashScreen` resmi UNIDA Gontor (`flutter/lib/features/splash/screens/splash_screen.dart`), preloading sesi mock & cache asset, serta perbaikan konfigurasi Android Native `LaunchTheme` & `launch_background.xml` dengan latar `unida_navy` (#0B2A4A) dan logo centered untuk mengeliminasi layar blank hitam saat aplikasi pertama kali dibuka di HP.
 - [x] Regression: build/tsc/demo-e2e lolos, guard `hasStore` tetap otorisasi.
-  Bukti 2026-10-30: `bun run verify` (tsc 0 error, 22 unit tests pass, build sukses) dan `./scripts/demo-e2e.sh` lolos 100%.
+  Bukti 2026-11-01: `bun run verify` (tsc 0 error, 22 unit tests pass dalam ~800ms, build sukses), `./scripts/demo-e2e.sh` lolos 100%, dan `flutter build apk --debug` sukses terkompilasi.
 
 ## Backlog (setelah M12)
 

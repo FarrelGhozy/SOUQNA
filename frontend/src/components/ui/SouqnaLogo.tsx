@@ -133,6 +133,13 @@ export function SouqnaLogo({
 
   const markSize = markSizes[size] || 28;
 
+  const imgHeights: Record<'sm' | 'md' | 'lg', number> = {
+    sm: 24,
+    md: 32,
+    lg: 44,
+  };
+  const imgHeight = imgHeights[size] || 32;
+
   if (variant === 'mark') {
     return (
       <div style={{ display: 'inline-flex', alignItems: 'center', ...style }} {...props}>
@@ -142,39 +149,40 @@ export function SouqnaLogo({
   }
 
   if (variant === 'vertical') {
+    const vHeights: Record<'sm' | 'md' | 'lg', number> = {
+      sm: 52,
+      md: 80,
+      lg: 120,
+    };
+    const vHeight = vHeights[size] || 80;
+
     return (
       <div
         style={{
           display: 'inline-flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '10px',
+          gap: '8px',
           ...style,
         }}
         {...props}
       >
-        <SouqnaMark size={Math.round(markSize * 1.8)} variant={isDark ? 'white' : 'color'} />
-        <div style={{ display: 'flex', alignItems: 'baseline', letterSpacing: '0.04em', fontWeight: 800 }}>
-          <span style={{ color: goldColor, fontSize: textSizes[size] }}>S</span>
-          <span style={{ color: navyTextColor, fontSize: textSizes[size] }}>OUQNA</span>
-          <span
-            style={{
-              display: 'inline-block',
-              width: size === 'sm' ? 4 : size === 'lg' ? 8 : 6,
-              height: size === 'sm' ? 4 : size === 'lg' ? 8 : 6,
-              borderRadius: '50%',
-              backgroundColor: goldColor,
-              marginLeft: 2,
-            }}
-          />
-        </div>
+        <img
+          src={isDark ? '/images/logo-horizontal-white.svg' : '/images/logo.svg'}
+          alt="SOUQNA"
+          style={{
+            height: vHeight,
+            width: 'auto',
+            display: 'block',
+            objectFit: 'contain',
+          }}
+        />
         {subtext && (
           <span
             style={{
-              fontSize: size === 'sm' ? '10px' : size === 'lg' ? '13px' : '11px',
-              color: isDark ? 'rgba(255,255,255,0.7)' : 'var(--muted, #64748B)',
-              fontWeight: 500,
-              marginTop: -4,
+              fontSize: size === 'sm' ? '11px' : size === 'lg' ? '14px' : '12px',
+              color: isDark ? 'rgba(255,255,255,0.8)' : 'var(--muted, #64748B)',
+              fontWeight: 600,
             }}
           >
             {subtext}
@@ -196,35 +204,32 @@ export function SouqnaLogo({
       }}
       {...props}
     >
-      <SouqnaMark size={markSize} variant={isDark ? 'white' : 'color'} />
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', letterSpacing: '0.04em', fontWeight: 800 }}>
-          <span style={{ color: goldColor, fontSize: textSizes[size] }}>S</span>
-          <span style={{ color: navyTextColor, fontSize: textSizes[size] }}>OUQNA</span>
-          <span
-            style={{
-              display: 'inline-block',
-              width: size === 'sm' ? 4 : size === 'lg' ? 8 : 6,
-              height: size === 'sm' ? 4 : size === 'lg' ? 8 : 6,
-              borderRadius: '50%',
-              backgroundColor: goldColor,
-              marginLeft: 2,
-            }}
-          />
-        </div>
-        {subtext && (
-          <span
-            style={{
-              fontSize: size === 'sm' ? '10px' : size === 'lg' ? '12px' : '11px',
-              color: isDark ? 'rgba(255,255,255,0.7)' : 'var(--muted, #64748B)',
-              fontWeight: 500,
-              marginTop: 3,
-            }}
-          >
-            {subtext}
-          </span>
-        )}
-      </div>
+      <img
+        src={isDark ? '/images/logo-horizontal-white.svg' : '/images/logo-horizontal.svg'}
+        alt="SOUQNA"
+        style={{
+          height: imgHeight,
+          width: 'auto',
+          display: 'block',
+          objectFit: 'contain',
+        }}
+      />
+      {subtext && (
+        <span
+          style={{
+            fontSize: size === 'sm' ? '10px' : size === 'lg' ? '12px' : '11px',
+            color: isDark ? 'var(--unida-gold)' : 'var(--unida-navy)',
+            fontWeight: 700,
+            background: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(11, 42, 74, 0.08)',
+            border: isDark ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(11, 42, 74, 0.2)',
+            padding: '2px 7px',
+            borderRadius: 'var(--radius-sm, 4px)',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {subtext}
+        </span>
+      )}
     </div>
   );
 }

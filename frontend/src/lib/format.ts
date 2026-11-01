@@ -4,4 +4,4 @@ export const formatIDR = (n: number) =>
 export const formatDateWIB = (iso: string) =>
   new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(new Date(iso));
 
-export const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+export const delay = (ms = 50) => new Promise((r) => setTimeout(r, ms));

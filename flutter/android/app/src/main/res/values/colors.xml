@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="unida_navy">#0B2A4A</color>
+    <color name="unida_gold">#D4AF37</color>
 </resources>

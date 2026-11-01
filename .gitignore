@@ -12,6 +12,8 @@ frontend/.vite/
 # Flutter
 flutter/.dart_tool/
 flutter/build/
+flutter/android/build/
+flutter/android/.gradle/
 flutter/.flutter-plugins
 flutter/.flutter-plugins-dependencies
 .packages

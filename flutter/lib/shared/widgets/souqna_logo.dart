@@ -26,30 +26,51 @@ Path _parseSvgPath(String d) {
   final path = Path();
   final tokens = d.trim().split(RegExp(r'\s+'));
   int i = 0;
+  String currentCmd = '';
   while (i < tokens.length) {
-    final cmd = tokens[i];
-    if (cmd == 'M') {
-      final x = double.parse(tokens[i + 1]);
-      final y = double.parse(tokens[i + 2]);
-      path.moveTo(x, y);
-      i += 3;
-    } else if (cmd == 'l') {
-      final dx = double.parse(tokens[i + 1]);
-      final dy = double.parse(tokens[i + 2]);
-      path.relativeLineTo(dx, dy);
-      i += 3;
-    } else if (cmd == 'c') {
-      final dx1 = double.parse(tokens[i + 1]);
-      final dy1 = double.parse(tokens[i + 2]);
-      final dx2 = double.parse(tokens[i + 3]);
-      final dy2 = double.parse(tokens[i + 4]);
-      final dx = double.parse(tokens[i + 5]);
-      final dy = double.parse(tokens[i + 6]);
-      path.relativeCubicTo(dx1, dy1, dx2, dy2, dx, dy);
-      i += 7;
-    } else if (cmd == 'z' || cmd == 'Z') {
-      path.close();
+    final token = tokens[i];
+    final isLetter = RegExp(r'^[a-zA-Z]$').hasMatch(token);
+    if (isLetter) {
+      currentCmd = token;
       i += 1;
+      if (currentCmd == 'z' || currentCmd == 'Z') {
+        path.close();
+        currentCmd = '';
+        continue;
+      }
+    }
+    if (currentCmd == 'M') {
+      if (i + 1 < tokens.length) {
+        final x = double.parse(tokens[i]);
+        final y = double.parse(tokens[i + 1]);
+        path.moveTo(x, y);
+        i += 2;
+        currentCmd = 'L';
+      } else {
+        break;
+      }
+    } else if (currentCmd == 'l') {
+      if (i + 1 < tokens.length) {
+        final dx = double.parse(tokens[i]);
+        final dy = double.parse(tokens[i + 1]);
+        path.relativeLineTo(dx, dy);
+        i += 2;
+      } else {
+        break;
+      }
+    } else if (currentCmd == 'c') {
+      if (i + 5 < tokens.length) {
+        final dx1 = double.parse(tokens[i]);
+        final dy1 = double.parse(tokens[i + 1]);
+        final dx2 = double.parse(tokens[i + 2]);
+        final dy2 = double.parse(tokens[i + 3]);
+        final dx = double.parse(tokens[i + 4]);
+        final dy = double.parse(tokens[i + 5]);
+        path.relativeCubicTo(dx1, dy1, dx2, dy2, dx, dy);
+        i += 6;
+      } else {
+        break;
+      }
     } else {
       i += 1;
     }
@@ -217,21 +238,44 @@ class SouqnaLogo extends StatelessWidget {
     );
 
     if (isVertical) {
+      final double imgHeight;
+      switch (size) {
+        case SouqnaLogoSize.sm:
+          imgHeight = 52;
+          break;
+        case SouqnaLogoSize.md:
+          imgHeight = 76;
+          break;
+        case SouqnaLogoSize.lg:
+          imgHeight = 110;
+          break;
+      }
+
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SouqnaMark(size: markSize * 1.6, isWhite: isDark),
-          const SizedBox(height: 8),
-          wordmark,
+          Image.asset(
+            'assets/images/logo-512.png',
+            height: imgHeight,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SouqnaMark(size: markSize * 1.6, isWhite: isDark),
+                const SizedBox(height: 8),
+                wordmark,
+              ],
+            ),
+          ),
           if (subtext != null) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 6),
             Text(
               subtext!,
               style: TextStyle(
                 color: subtextColor,
                 fontSize: fontSize * 0.55,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -239,28 +283,68 @@ class SouqnaLogo extends StatelessWidget {
       );
     }
 
+    final double hImgHeight;
+    switch (size) {
+      case SouqnaLogoSize.sm:
+        hImgHeight = 22;
+        break;
+      case SouqnaLogoSize.md:
+        hImgHeight = 30;
+        break;
+      case SouqnaLogoSize.lg:
+        hImgHeight = 42;
+        break;
+    }
+
+    final logoImg = Image.asset(
+      isDark
+          ? 'assets/images/logo-horizontal-white.png'
+          : 'assets/images/logo-horizontal.png',
+      height: hImgHeight,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SouqnaMark(size: markSize, isWhite: isDark),
+          const SizedBox(width: 8),
+          wordmark,
+        ],
+      ),
+    );
+
+    if (subtext == null) {
+      return logoImg;
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SouqnaMark(size: markSize, isWhite: isDark),
+        logoImg,
         const SizedBox(width: 8),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            wordmark,
-            if (subtext != null)
-              Text(
-                subtext!,
-                style: TextStyle(
-                  color: subtextColor,
-                  fontSize: fontSize * 0.55,
-                  fontWeight: FontWeight.w500,
-                  height: 1.1,
-                ),
-              ),
-          ],
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.12)
+                : AppTheme.unidaNavy.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: isDark
+                  ? AppTheme.unidaGold.withValues(alpha: 0.6)
+                  : AppTheme.unidaNavy.withValues(alpha: 0.2),
+              width: 0.8,
+            ),
+          ),
+          child: Text(
+            subtext!,
+            style: TextStyle(
+              color: isDark ? AppTheme.unidaGold : AppTheme.unidaNavy,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
         ),
       ],
     );

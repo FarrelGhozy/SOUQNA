@@ -243,7 +243,7 @@ class ApiClient {
   }
 
   Future<StoreMock?> getMyStore(String ownerId) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     return _myStore(ownerId);
   }
 
@@ -256,7 +256,7 @@ class ApiClient {
     required bool deliveryAvailable,
     required int deliveryFee,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     if (_myStore(ownerId) != null) {
       throw Exception('Akun ini sudah memiliki toko — 1 akun hanya 1 toko.');
     }
@@ -281,7 +281,7 @@ class ApiClient {
     bool? deliveryAvailable,
     int? deliveryFee,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     final cur = _myStore(ownerId);
     if (cur == null) throw Exception('Belum punya toko.');
     if (name != null && name.trim().length < 3) {
@@ -310,7 +310,7 @@ class ApiClient {
   }
 
   Future<List<ProductMock>> getMyProducts(String storeId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     final list = _allProducts().where((p) => p.storeId == storeId).toList();
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
@@ -326,7 +326,7 @@ class ApiClient {
     String imageUrl = '',
     required List<VariantMock> variants,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     final st = _myStore(ownerId);
     if (st == null || st.id != storeId) throw Exception('Belum punya toko.');
     if (name.trim().length < 3) throw Exception('Nama produk minimal 3 karakter.');
@@ -363,7 +363,7 @@ class ApiClient {
     String? status,
     String? imageUrl,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     final st = _myStore(ownerId);
     if (st == null) throw Exception('Belum punya toko.');
     final live = _raw(productId);
@@ -386,7 +386,7 @@ class ApiClient {
   }
 
   Future<void> deleteMyProduct({required String ownerId, required String productId}) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     final st = _myStore(ownerId);
     if (st == null) throw Exception('Belum punya toko.');
     final live = _raw(productId);
@@ -409,7 +409,7 @@ class ApiClient {
     required int price,
     required int stock,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     final st = _myStore(ownerId);
     if (st == null) throw Exception('Belum punya toko.');
     final live = _raw(productId);
@@ -431,7 +431,7 @@ class ApiClient {
     int? price,
     int? stock,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     final st = _myStore(ownerId);
     if (st == null) throw Exception('Belum punya toko.');
     final pid = _ownerProductOf(variantId);
@@ -458,12 +458,12 @@ class ApiClient {
   }
 
   Future<List<Category>> getCategories() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     return categoriesMock;
   }
 
   Future<List<StoreMock>> getStores() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     return _allStores().where((s) => s.status == 'active').toList();
   }
 
@@ -477,7 +477,7 @@ class ApiClient {
     int page = 1,
     int limit = 12,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     final active = _allStores().where((s) => s.status == 'active').map((s) => s.id).toSet();
     var list = _allProducts().where((p) {
       if (p.status != 'published') return false;
@@ -515,7 +515,7 @@ class ApiClient {
   }
 
   Future<ProductMock?> getProduct(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     try {
       return _allProducts().firstWhere((p) => p.id == id);
     } catch (_) {
@@ -524,7 +524,7 @@ class ApiClient {
   }
 
   Future<StoreMock?> getStore(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     try {
       return _allStores().firstWhere((s) => s.id == id);
     } catch (_) {
@@ -533,7 +533,7 @@ class ApiClient {
   }
 
   Future<List<ProductMock>> getStoreProducts(String storeId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     return _allProducts().where((p) => p.storeId == storeId && p.status == 'published').toList();
   }
 
@@ -585,12 +585,12 @@ class ApiClient {
   }
 
   Future<List<CartDetailed>> getCartDetailed() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     return _cart.map(_detail).toList();
   }
 
   Future<void> addToCart(String variantId, [int qty = 1]) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     final r = _resolve(variantId);
     if (r == null) throw Exception('Varian tidak ditemukan.');
     if (r.p.status != 'published') throw Exception('Produk disembunyikan.');
@@ -611,7 +611,7 @@ class ApiClient {
   }
 
   Future<void> updateCartItemQty(String id, int qty) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     final i = _cart.indexWhere((c) => c.id == id);
     if (i < 0) throw Exception('Item tidak ada di keranjang.');
     if (qty <= 0) {
@@ -624,13 +624,13 @@ class ApiClient {
   }
 
   Future<void> removeCartItem(String id) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     _cart.removeWhere((c) => c.id == id);
   }
 
   // --- Voucher (aturan sama dengan web: aktif, expired, min-subtotal) ---
   Future<List<VoucherMock>> getVouchers() async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     return vouchersMock;
   }
 
@@ -650,7 +650,7 @@ class ApiClient {
   }
 
   Future<int> validateVoucher(String code, int subtotal) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     return voucherAmount(code, subtotal);
   }
 
@@ -728,7 +728,7 @@ class ApiClient {
     required Map<String, String> locations,
     String? voucherCode,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 80));
     final prev = validateCheckout(items: List.of(_cart), methods: methods,
       locations: locations, voucherCode: voucherCode);
     // Mutasi stok (atomik: hanya setelah validasi lolos).
@@ -801,7 +801,7 @@ class ApiClient {
   ];
 
   Future<List<OrderMock>> getOrders({String? buyerId}) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     var list = _orders.toList();
     if (buyerId != null && buyerId.isNotEmpty) {
       list = list.where((o) => o.buyerId == buyerId).toList();
@@ -811,13 +811,13 @@ class ApiClient {
   }
 
   Future<List<OrderMock>> getMerchantOrders(String ownerId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     final mine = _allStores().where((s) => s.ownerId == ownerId).map((s) => s.id).toSet();
     return _orders.where((o) => mine.contains(o.storeId)).toList();
   }
 
   Future<OrderMock?> getOrder(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 60));
     try {
       return _orders.firstWhere((o) => o.id == id);
     } catch (_) {
@@ -827,7 +827,7 @@ class ApiClient {
 
   /// Transisi legal saja; [isMerchant] = pemilik toko, else pembeli pemilik.
   Future<OrderMock> transitionOrder(String id, String action, {required bool isMerchant}) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     final o = _orders.firstWhere((x) => x.id == id, orElse: () => throw Exception('Pesanan tidak ditemukan.'));
     final from = o.status;
     void needBuyer() {
@@ -895,18 +895,18 @@ class ApiClient {
   };
 
   Future<List<ProductMock>> getWishlist(String userId) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     final ids = _wishlist[userId] ?? const <String>{};
     return _allProducts().where((p) => ids.contains(p.id)).toList();
   }
 
   Future<bool> isWishlisted(String userId, String productId) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 20));
     return _wishlist[userId]?.contains(productId) ?? false;
   }
 
   Future<void> addToWishlist(String userId, String productId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     if (userId.isEmpty) throw Exception('Wajib login untuk menyimpan wishlist.');
     ProductMock? p;
     try {
@@ -925,7 +925,7 @@ class ApiClient {
   }
 
   Future<void> removeFromWishlist(String userId, String productId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     if (userId.isEmpty) throw Exception('Wajib login.');
     _wishlist[userId]?.remove(productId);
   }
@@ -944,14 +944,14 @@ class ApiClient {
   ];
 
   Future<List<ReviewMock>> getReviews(String productId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     final list = _reviews.where((r) => r.productId == productId).toList();
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
   }
 
   Future<ReviewMock?> getReviewForItem(String orderItemId) async {
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 20));
     try {
       return _reviews.firstWhere((r) => r.orderItemId == orderItemId);
     } catch (_) {
@@ -965,7 +965,7 @@ class ApiClient {
     required int rating,
     String text = '',
   }) async {
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 50));
     if (buyerId.isEmpty) throw Exception('Wajib login untuk memberi ulasan.');
     OrderMock? owner;
     OrderItemMock? item;
@@ -1051,7 +1051,7 @@ class ApiClient {
 
   Future<List<ConversationMock>> getConversations(
       String userId, Set<String> storeIds) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     if (userId.isEmpty) throw Exception('Wajib login untuk membuka chat.');
     return _convs
         .where((c) => _isParticipant(c, userId, storeIds))
@@ -1060,7 +1060,7 @@ class ApiClient {
 
   Future<ConversationMock> getOrCreateConversation(
       String buyerId, String storeId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     if (buyerId.isEmpty) throw Exception('Wajib login untuk chat.');
     if (_allStores().every((s) => s.id != storeId)) {
       throw Exception('Toko tidak ditemukan.');
@@ -1080,7 +1080,7 @@ class ApiClient {
 
   Future<({List<MessageMock> messages, int hidden})> getMessages(
       String convId, String userId, Set<String> storeIds) async {
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 30));
     if (userId.isEmpty) throw Exception('Wajib login.');
     ConversationMock? conv;
     try {
@@ -1101,7 +1101,7 @@ class ApiClient {
 
   Future<MessageMock> sendMessage(String convId, String senderId,
       Set<String> storeIds, String body) async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 40));
     if (senderId.isEmpty) throw Exception('Wajib login.');
     ConversationMock? conv;
     try {
