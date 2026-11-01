@@ -321,12 +321,25 @@ class SouqnaLogo extends StatelessWidget {
       errorBuilder: (_, __, ___) => wordmark,
     );
 
+    final double markSpacing;
+    switch (size) {
+      case SouqnaLogoSize.sm:
+        markSpacing = 14;
+        break;
+      case SouqnaLogoSize.md:
+        markSpacing = 18;
+        break;
+      case SouqnaLogoSize.lg:
+        markSpacing = 24;
+        break;
+    }
+
     final lockup = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         markWidget,
-        const SizedBox(width: 8),
+        SizedBox(width: markSpacing),
         textWidget,
       ],
     );
