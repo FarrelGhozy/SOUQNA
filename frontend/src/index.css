@@ -522,3 +522,59 @@ img {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
+
+/* Floating Chat Button (Pojok Kanan Bawah) */
+.floating-chat-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 95;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--radius-full, 9999px);
+  background: linear-gradient(135deg, var(--unida-navy) 0%, var(--unida-blue) 100%);
+  color: var(--surface, #FFFFFF);
+  border: 1.5px solid var(--unida-gold);
+  box-shadow: 0 4px 16px rgba(11, 42, 74, 0.3);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--transition-fast, 150ms ease),
+              box-shadow var(--transition-fast, 150ms ease),
+              border-color var(--transition-fast, 150ms ease);
+}
+
+.floating-chat-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(11, 42, 74, 0.45);
+  border-color: #f7d070;
+  color: var(--surface, #FFFFFF);
+}
+
+.floating-chat-btn:active {
+  transform: translateY(0);
+}
+
+.floating-chat-btn svg {
+  color: var(--unida-gold);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast, 150ms ease);
+}
+
+.floating-chat-btn:hover svg {
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .floating-chat-btn {
+    bottom: 74px;
+    right: 16px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+

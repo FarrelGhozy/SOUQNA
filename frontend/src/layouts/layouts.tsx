@@ -17,6 +17,7 @@ import {
   VoucherIcon,
   FileTextIcon,
   SettingsIcon,
+  ChatIcon,
 } from '../components/ui/Icons.js';
 
 function Header() {
@@ -74,7 +75,7 @@ function Header() {
         }}
       >
         {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link
             to={sellerMode ? '/merchant' : '/'}
             style={{
@@ -88,23 +89,8 @@ function Header() {
               variant="horizontal"
               theme="dark"
               size="md"
-              subtext={sellerMode ? 'Seller Centre' : 'UNIDA Gontor'}
             />
           </Link>
-          {sellerMode && (
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                color: 'var(--unida-navy)',
-                background: 'var(--unida-gold)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
-              }}
-            >
-              MODE TOKO
-            </span>
-          )}
         </div>
 
         {/* Desktop Navigation Links: mode penjual sembunyikan navbar pembeli, ganti fokus jualan */}
@@ -120,20 +106,16 @@ function Header() {
           {sellerMode ? (
             <>
               <NavLink to="/merchant" end style={navLinkStyle}>
-                <DashboardIcon size={16} />
-                <span>Ringkasan</span>
+                Ringkasan
               </NavLink>
               <NavLink to="/merchant/products" style={navLinkStyle}>
-                <StoreIcon size={16} />
-                <span>Produk</span>
+                Produk
               </NavLink>
               <NavLink to="/merchant/orders" style={navLinkStyle}>
-                <OrdersIcon size={16} />
-                <span>Pesanan Masuk</span>
+                Pesanan Masuk
               </NavLink>
               <NavLink to="/merchant/store" style={navLinkStyle}>
-                <SettingsIcon size={16} />
-                <span>Pengaturan Toko</span>
+                Pengaturan Toko
               </NavLink>
               <button
                 onClick={() => {
@@ -170,7 +152,6 @@ function Header() {
               </NavLink>
               {s && <NavLink to="/orders" style={navLinkStyle}>Pesanan</NavLink>}
               {s && <NavLink to="/wishlist" style={navLinkStyle}>Wishlist</NavLink>}
-              {s && <NavLink to="/chat" style={navLinkStyle}>Chat</NavLink>}
               {s?.hasStore && (
                 <NavLink
                   to="/merchant"
@@ -412,6 +393,20 @@ function MobileBottomNav() {
   );
 }
 
+function FloatingChatButton() {
+  return (
+    <Link
+      to="/chat"
+      className="floating-chat-btn"
+      aria-label="Buka Chat Obrolan"
+      title="Buka Chat Obrolan"
+    >
+      <ChatIcon size={18} />
+      <span>Chat</span>
+    </Link>
+  );
+}
+
 export function PublicLayout() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -421,6 +416,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <Footer />
+      <FloatingChatButton />
       <MobileBottomNav />
     </div>
   );
@@ -435,6 +431,7 @@ export function AccountLayout() {
         <Outlet />
       </main>
       <Footer />
+      <FloatingChatButton />
       <MobileBottomNav />
     </div>
   );
@@ -459,6 +456,7 @@ export function MerchantLayout() {
         </main>
       </div>
       <Footer />
+      <FloatingChatButton />
       <MobileBottomNav />
     </div>
   );

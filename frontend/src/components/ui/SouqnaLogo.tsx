@@ -131,14 +131,35 @@ export function SouqnaLogo({
     lg: '30px',
   };
 
-  const markSize = markSizes[size] || 28;
-
-  const imgHeights: Record<'sm' | 'md' | 'lg', number> = {
-    sm: 24,
-    md: 32,
-    lg: 44,
+  const markHeights: Record<'sm' | 'md' | 'lg', number> = {
+    sm: 26,
+    md: 36,
+    lg: 46,
   };
-  const imgHeight = imgHeights[size] || 32;
+
+  const textHeights: Record<'sm' | 'md' | 'lg', number> = {
+    sm: 18,
+    md: 24,
+    lg: 32,
+  };
+
+  const markSpacings: Record<'sm' | 'md' | 'lg', number> = {
+    sm: 12,
+    md: 16,
+    lg: 20,
+  };
+
+  const textOffsets: Record<'sm' | 'md' | 'lg', number> = {
+    sm: 2,
+    md: 3,
+    lg: 4,
+  };
+
+  const markHeight = markHeights[size] || 36;
+  const textHeight = textHeights[size] || 24;
+  const markSpacing = markSpacings[size] || 16;
+  const textOffset = textOffsets[size] || 3;
+  const markSize = markSizes[size] || 28;
 
   if (variant === 'mark') {
     return (
@@ -198,20 +219,32 @@ export function SouqnaLogo({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: size === 'sm' ? '8px' : '10px',
+        gap: `${markSpacing}px`,
         textDecoration: 'none',
         ...style,
       }}
       {...props}
     >
       <img
-        src={isDark ? '/images/logo-horizontal-white.svg' : '/images/logo-horizontal.svg'}
-        alt="SOUQNA"
+        src={isDark ? '/images/logo-mark-white.png' : '/images/logo-mark.png'}
+        alt=""
+        aria-hidden="true"
         style={{
-          height: imgHeight,
+          height: `${markHeight}px`,
           width: 'auto',
           display: 'block',
           objectFit: 'contain',
+        }}
+      />
+      <img
+        src={isDark ? '/images/logo-text-white.png' : '/images/logo-text.png'}
+        alt="SOUQNA"
+        style={{
+          height: `${textHeight}px`,
+          width: 'auto',
+          display: 'block',
+          objectFit: 'contain',
+          transform: `translateY(${textOffset}px)`,
         }}
       />
       {subtext && (
@@ -225,6 +258,7 @@ export function SouqnaLogo({
             padding: '2px 7px',
             borderRadius: 'var(--radius-sm, 4px)',
             letterSpacing: '0.02em',
+            transform: `translateY(${textOffset}px)`,
           }}
         >
           {subtext}
