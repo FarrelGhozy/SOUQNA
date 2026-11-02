@@ -26,3 +26,26 @@ flutter/.flutter-plugins-dependencies
 Thumbs.db
 .vscode/
 .idea/
+
+# Playwright MCP
+.playwright-mcp/
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.xdv
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+
+# LibreOffice lock files
+.~lock.*#
