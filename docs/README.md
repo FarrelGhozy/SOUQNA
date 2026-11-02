@@ -37,6 +37,7 @@ satunya harus diperbaiki lewat issue — lihat `implementation-audit.md`.
 | `uat-checklist.md` | UAT checklist final alur pembeli, merchant, dan admin | M12 |
 | `release-notes-v1.0.0-demo.md` | Release notes demo v1.0.0-demo ringkasan fitur | M12 |
 | `demo-e2e.md` | Skenario demo manual + `./scripts/demo-e2e.sh` | M8 |
+| `proposal/` | Proposal akademik web & Android (LaTeX, PDF, presentasi) + tautan dokumentasi | baru |
 | `../TODO.md` | Checklist kerja aktif + issue | turunan §14 |
 | `../AGENTS.md` | Aturan agen global | turunan §6–§7 |
 
